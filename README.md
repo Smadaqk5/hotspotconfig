@@ -318,3 +318,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 **Built with ❤️ for Kenyan MikroTik hotspot providers**
+#   h o t s p o t c o n f i g  
+ 
