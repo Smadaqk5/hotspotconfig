@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'config_generator',
     'dashboard',
     'billing_templates',
+    'tickets',
 ]
 
 MIDDLEWARE = [
