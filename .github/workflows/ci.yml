@@ -44,20 +44,22 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install flake8 pytest pytest-django
+        pip install -r requirements-dev.txt
     
     - name: Run linting
       run: |
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 . --count --exit-zero --statistics
     
     - name: Run tests
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
         SECRET_KEY: test-secret-key
         DEBUG: True
+        ALLOWED_HOSTS: localhost,127.0.0.1
       run: |
-        python manage.py test
+        python manage.py test --verbosity=2
+        python test_basic.py
     
     - name: Check migrations
       run: |
@@ -72,7 +74,7 @@ jobs:
     - name: Run security checks
       run: |
         pip install bandit safety
-        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -f json -o bandit-report.json -c .bandit || true
         safety check --json --output safety-report.json || true
     
     - name: Upload security reports
