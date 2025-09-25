@@ -72,6 +72,20 @@
                         <p class="text-gray-600">Create a new MikroTik hotspot configuration</p>
                     </div>
                     <div class="p-6">
+                        <!-- Billing Template Selection -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-3">Select Billing Template (Optional)</h3>
+                            <div id="billing-templates" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Templates will be loaded here -->
+                            </div>
+                            <div class="mt-3">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="use-billing-template" class="mr-2">
+                                    <span class="text-sm text-gray-600">Use billing template for automatic bandwidth and duration configuration</span>
+                                </label>
+                            </div>
+                        </div>
+                        
                         <form id="config-form" class="space-y-6">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
@@ -288,14 +302,73 @@
                     profileSelect.appendChild(option);
                 });
             }
+            
+            // Load billing templates
+            await loadBillingTemplates();
         } catch (error) {
             console.error('Error loading form options:', error);
+        }
+    }
+    
+    // Load billing templates
+    async function loadBillingTemplates() {
+        try {
+            const response = await fetch('/api/billing-templates/');
+            if (response.ok) {
+                const templates = await response.json();
+                const container = document.getElementById('billing-templates');
+                
+                templates.forEach(template => {
+                    const templateCard = document.createElement('div');
+                    templateCard.className = 'border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500 transition-colors';
+                    templateCard.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-gray-900">${template.name}</h4>
+                            ${template.is_popular ? '<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Popular</span>' : ''}
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">${template.description}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-900">${template.bandwidth_display}</span>
+                            <span class="text-sm text-gray-600">${template.duration_display}</span>
+                        </div>
+                        <div class="mt-2 text-right">
+                            <span class="text-lg font-bold text-blue-600">${template.price_display}</span>
+                        </div>
+                    `;
+                    
+                    templateCard.addEventListener('click', () => {
+                        // Remove previous selection
+                        document.querySelectorAll('#billing-templates > div').forEach(card => {
+                            card.classList.remove('border-blue-500', 'bg-blue-50');
+                            card.classList.add('border-gray-200');
+                        });
+                        
+                        // Select this template
+                        templateCard.classList.remove('border-gray-200');
+                        templateCard.classList.add('border-blue-500', 'bg-blue-50');
+                        
+                        // Store selected template ID
+                        templateCard.dataset.templateId = template.id;
+                        
+                        // Check the checkbox
+                        document.getElementById('use-billing-template').checked = true;
+                    });
+                    
+                    container.appendChild(templateCard);
+                });
+            }
+        } catch (error) {
+            console.error('Error loading billing templates:', error);
         }
     }
 
     // Handle form submission
     document.getElementById('config-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        // Get selected billing template
+        const selectedTemplate = document.querySelector('#billing-templates > div.border-blue-500');
+        const billingTemplateId = selectedTemplate ? selectedTemplate.dataset.templateId : null;
         
         const formData = {
             template_id: 1, // Default template
@@ -306,6 +379,7 @@
             voucher_type_id: document.getElementById('voucher-type').value,
             bandwidth_profile_id: document.getElementById('bandwidth-profile').value,
             max_users: document.getElementById('max-users').value,
+            billing_template_id: billingTemplateId,
         };
         
         try {

@@ -57,6 +57,13 @@ class GeneratedConfig(models.Model):
     """Generated configuration files"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_configs')
     template = models.ForeignKey(ConfigTemplate, on_delete=models.CASCADE)
+    billing_template = models.ForeignKey(
+        'billing_templates.BillingTemplate', 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        help_text="Billing template used for this configuration"
+    )
     config_name = models.CharField(max_length=200)
     config_content = models.TextField()
     
@@ -71,6 +78,11 @@ class GeneratedConfig(models.Model):
     max_users = models.IntegerField(default=50)
     voucher_length = models.IntegerField(default=8)  # Voucher code length
     voucher_prefix = models.CharField(max_length=10, blank=True, null=True)
+    
+    # Billing template variables
+    bandwidth_mbps = models.PositiveIntegerField(null=True, blank=True, help_text="Bandwidth in Mbps from billing template")
+    upload_mbps = models.PositiveIntegerField(null=True, blank=True, help_text="Upload bandwidth in Mbps from billing template")
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True, help_text="Duration in seconds from billing template")
     
     created_at = models.DateTimeField(auto_now_add=True)
     

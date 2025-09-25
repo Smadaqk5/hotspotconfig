@@ -15,6 +15,7 @@ from accounts.models import User, UserProfile
 from subscriptions.models import SubscriptionPlan, Subscription, SubscriptionUsage
 from payments.models import Payment, PaymentItem
 from config_generator.models import MikroTikModel, VoucherType, BandwidthProfile, ConfigTemplate, GeneratedConfig
+from billing_templates.models import BillingTemplate
 
 # Import serializers
 from accounts.serializers import UserSerializer, UserProfileSerializer
@@ -24,6 +25,7 @@ from config_generator.serializers import (
     MikroTikModelSerializer, VoucherTypeSerializer, BandwidthProfileSerializer,
     ConfigTemplateSerializer, GeneratedConfigSerializer, ConfigGenerationSerializer
 )
+from billing_templates.serializers import BillingTemplateListSerializer, BillingTemplateConfigDataSerializer
 
 
 class APIStatsView(APIView):
@@ -155,6 +157,20 @@ class PublicTemplatesView(generics.ListAPIView):
     """Public config templates (no authentication required)"""
     queryset = ConfigTemplate.objects.filter(is_active=True)
     serializer_class = ConfigTemplateSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PublicBillingTemplatesView(generics.ListAPIView):
+    """Public billing templates (no authentication required)"""
+    queryset = BillingTemplate.objects.filter(is_active=True).order_by('sort_order', 'price')
+    serializer_class = BillingTemplateListSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class PopularBillingTemplatesView(generics.ListAPIView):
+    """Popular billing templates (no authentication required)"""
+    queryset = BillingTemplate.objects.filter(is_active=True, is_popular=True).order_by('sort_order', 'price')
+    serializer_class = BillingTemplateListSerializer
     permission_classes = [permissions.AllowAny]
 
 
@@ -294,6 +310,11 @@ def generate_config_api(request):
     voucher_type = get_object_or_404(VoucherType, id=data['voucher_type_id'], is_active=True)
     bandwidth_profile = get_object_or_404(BandwidthProfile, id=data['bandwidth_profile_id'], is_active=True)
     
+    # Get billing template if provided
+    billing_template = None
+    if 'billing_template_id' in data and data['billing_template_id']:
+        billing_template = get_object_or_404(BillingTemplate, id=data['billing_template_id'], is_active=True)
+    
     # Prepare template context
     context = {
         'hotspot_name': data['hotspot_name'],
@@ -306,6 +327,19 @@ def generate_config_api(request):
         'voucher_prefix': data.get('voucher_prefix', ''),
         'user': request.user,
     }
+    
+    # Add billing template context if provided
+    if billing_template:
+        context.update({
+            'billing_template': billing_template,
+            'bandwidth_mbps': billing_template.mbps,
+            'upload_mbps': billing_template.upload_mbps or billing_template.mbps,
+            'duration_seconds': billing_template.get_duration_seconds(),
+            'bandwidth_bytes': billing_template.get_bandwidth_bytes(),
+            'upload_bandwidth_bytes': billing_template.get_upload_bandwidth_bytes(),
+            'duration_type': billing_template.duration_type,
+            'duration_value': billing_template.duration_value,
+        })
     
     # Generate config using Jinja2
     try:
@@ -322,6 +356,7 @@ def generate_config_api(request):
     generated_config = GeneratedConfig.objects.create(
         user=request.user,
         template=template,
+        billing_template=billing_template,
         config_name=data['config_name'],
         config_content=config_content,
         hotspot_name=data['hotspot_name'],
@@ -332,7 +367,20 @@ def generate_config_api(request):
         max_users=data['max_users'],
         voucher_length=data['voucher_length'],
         voucher_prefix=data.get('voucher_prefix', ''),
+        # Add billing template data
+        bandwidth_mbps=billing_template.mbps if billing_template else None,
+        upload_mbps=billing_template.upload_mbps if billing_template else None,
+        duration_seconds=billing_template.get_duration_seconds() if billing_template else None,
     )
+    
+    # Track billing template usage if used
+    if billing_template:
+        from billing_templates.models import BillingTemplateUsage
+        BillingTemplateUsage.objects.create(
+            template=billing_template,
+            user=request.user,
+            generated_config=generated_config
+        )
     
     # Update subscription usage
     usage, created = SubscriptionUsage.objects.get_or_create(subscription=subscription)
@@ -343,5 +391,6 @@ def generate_config_api(request):
         'config_id': generated_config.id,
         'config_content': config_content,
         'download_url': f'/api/config/download/{generated_config.id}/',
+        'billing_template_used': billing_template.name if billing_template else None,
         'message': 'Configuration generated successfully'
     }, status=status.HTTP_201_CREATED)

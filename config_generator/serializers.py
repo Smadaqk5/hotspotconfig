@@ -48,6 +48,7 @@ class ConfigGenerationSerializer(serializers.Serializer):
     dns_servers = serializers.CharField(max_length=200)
     voucher_type_id = serializers.IntegerField()
     bandwidth_profile_id = serializers.IntegerField()
+    billing_template_id = serializers.IntegerField(required=False, allow_null=True)
     max_users = serializers.IntegerField(default=50)
     voucher_length = serializers.IntegerField(default=8)
     voucher_prefix = serializers.CharField(max_length=10, required=False, allow_blank=True)

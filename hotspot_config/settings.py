@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'payments',
     'config_generator',
     'dashboard',
+    'billing_templates',
 ]
 
 MIDDLEWARE = [

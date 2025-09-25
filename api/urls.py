@@ -17,6 +17,8 @@ api_patterns = [
     path('public/voucher-types/', views.PublicVoucherTypesView.as_view(), name='public_voucher_types'),
     path('public/bandwidth-profiles/', views.PublicBandwidthProfilesView.as_view(), name='public_bandwidth_profiles'),
     path('public/templates/', views.PublicTemplatesView.as_view(), name='public_templates'),
+    path('public/billing-templates/', views.PublicBillingTemplatesView.as_view(), name='public_billing_templates'),
+    path('public/billing-templates/popular/', views.PopularBillingTemplatesView.as_view(), name='popular_billing_templates'),
     
     # User dashboard
     path('dashboard/', views.user_dashboard_data, name='user_dashboard'),
