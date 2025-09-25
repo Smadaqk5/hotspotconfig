@@ -1,0 +1,188 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='subscriptions' %}">{% trans 'Subscriptions' %}</a>
+&rsaquo; <a href="{% url 'admin:subscriptions_subscriptionplan_changelist' %}">{% trans 'Subscription plans' %}</a>
+&rsaquo; {% trans 'Bulk update' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+
+<div class="module aligned">
+    <h2>Selected Plans</h2>
+    <ul>
+        {% for plan in plans %}
+        <li><strong>{{ plan.name }}</strong> - KES {{ plan.price }} ({{ plan.duration_days }} days)</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    
+    <fieldset class="module aligned">
+        <h2>Update Options</h2>
+        
+        <div class="form-row">
+            <div>
+                <label for="{{ form.action.id_for_label }}">{{ form.action.label }}:</label>
+                {{ form.action }}
+                {% if form.action.help_text %}
+                    <p class="help">{{ form.action.help_text }}</p>
+                {% endif %}
+                {% if form.action.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.action.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-row" id="percentage-row" style="display: none;">
+            <div>
+                <label for="{{ form.percentage.id_for_label }}">{{ form.percentage.label }}:</label>
+                {{ form.percentage }}
+                {% if form.percentage.help_text %}
+                    <p class="help">{{ form.percentage.help_text }}</p>
+                {% endif %}
+                {% if form.percentage.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.percentage.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-row" id="duration-row" style="display: none;">
+            <div>
+                <label for="{{ form.new_duration.id_for_label }}">{{ form.new_duration.label }}:</label>
+                {{ form.new_duration }}
+                {% if form.new_duration.help_text %}
+                    <p class="help">{{ form.new_duration.help_text }}</p>
+                {% endif %}
+                {% if form.new_duration.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.new_duration.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div>
+                <label>Selected Plans:</label>
+                {{ form.plans }}
+                {% if form.plans.errors %}
+                    <ul class="errorlist">
+                        {% for error in form.plans.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </fieldset>
+    
+    <div class="submit-row">
+        <input type="submit" value="Apply Changes" class="default" name="apply">
+        <a href="{% url 'admin:subscriptions_subscriptionplan_changelist' %}" class="button cancel-link">Cancel</a>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const actionSelect = document.getElementById('{{ form.action.id_for_label }}');
+    const percentageRow = document.getElementById('percentage-row');
+    const durationRow = document.getElementById('duration-row');
+    
+    function toggleFields() {
+        const action = actionSelect.value;
+        
+        // Hide all conditional fields
+        percentageRow.style.display = 'none';
+        durationRow.style.display = 'none';
+        
+        // Show relevant fields based on action
+        if (action === 'update_price') {
+            percentageRow.style.display = 'block';
+        } else if (action === 'update_duration') {
+            durationRow.style.display = 'block';
+        }
+    }
+    
+    actionSelect.addEventListener('change', toggleFields);
+    toggleFields(); // Initialize on page load
+});
+</script>
+
+<style>
+.form-row {
+    margin-bottom: 15px;
+}
+
+.form-row label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-row input, .form-row select {
+    width: 100%;
+    max-width: 300px;
+}
+
+.help {
+    font-size: 11px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.errorlist {
+    color: #ba2121;
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+.submit-row {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.submit-row input[type="submit"] {
+    background: #417690;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.submit-row input[type="submit"]:hover {
+    background: #205067;
+}
+
+.cancel-link {
+    margin-left: 10px;
+    color: #417690;
+    text-decoration: none;
+}
+
+.cancel-link:hover {
+    text-decoration: underline;
+}
+</style>
+{% endblock %}

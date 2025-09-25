@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}MikroTik Hotspot Config Generator - Generate Professional Hotspot Configurations{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-primary to-secondary text-white py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-6xl font-bold mb-6">
+                Generate MikroTik Hotspot Configs
+                <span class="block text-yellow-300">Like a Pro</span>
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 text-blue-100">
+                Create professional hotspot configurations for your MikroTik routers in minutes, not hours.
+                Perfect for Kenyan ISPs and hotspot providers.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#pricing" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition duration-200">
+                    Get Started Now
+                </a>
+                <a href="#features" class="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary transition duration-200">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Why Choose Our Config Generator?
+            </h2>
+            <p class="text-xl text-gray-600">
+                Save time and reduce errors with our automated MikroTik configuration generator
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-bolt text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Lightning Fast</h3>
+                <p class="text-gray-600">Generate complete hotspot configurations in under 30 seconds</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Secure & Reliable</h3>
+                <p class="text-gray-600">Bank-grade security with Pesapal payment integration</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-cogs text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Customizable</h3>
+                <p class="text-gray-600">Tailor configurations to your specific MikroTik model and requirements</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-download text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Ready to Use</h3>
+                <p class="text-gray-600">Download .rsc files ready for immediate deployment</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Multi-User Support</h3>
+                <p class="text-gray-600">Manage multiple hotspot locations with user-friendly dashboard</p>
+            </div>
+            
+            <div class="text-center p-6">
+                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-headset text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">24/7 Support</h3>
+                <p class="text-gray-600">Get help when you need it with our dedicated support team</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section id="pricing" class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Simple, Transparent Pricing
+            </h2>
+            <p class="text-xl text-gray-600">
+                Choose the plan that fits your needs. All plans include unlimited config generation.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Basic Plan -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Basic</h3>
+                    <div class="text-4xl font-bold text-primary mb-4">
+                        KES 2,500
+                        <span class="text-lg text-gray-500">/month</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">Perfect for small hotspot providers</p>
+                </div>
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Unlimited config generation</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>All MikroTik models</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Email support</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Config history</span>
+                    </li>
+                </ul>
+                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
+                    Get Started
+                </button>
+            </div>
+            
+            <!-- Professional Plan -->
+            <div class="bg-white rounded-lg shadow-lg p-8 border-2 border-primary relative">
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold">Most Popular</span>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Professional</h3>
+                    <div class="text-4xl font-bold text-primary mb-4">
+                        KES 5,000
+                        <span class="text-lg text-gray-500">/month</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">Ideal for growing ISPs</p>
+                </div>
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Everything in Basic</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Priority support</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Custom templates</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>API access</span>
+                    </li>
+                </ul>
+                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
+                    Get Started
+                </button>
+            </div>
+            
+            <!-- Enterprise Plan -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <div class="text-center">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
+                    <div class="text-4xl font-bold text-primary mb-4">
+                        KES 10,000
+                        <span class="text-lg text-gray-500">/month</span>
+                    </div>
+                    <p class="text-gray-600 mb-6">For large ISPs and enterprises</p>
+                </div>
+                <ul class="space-y-3 mb-8">
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Everything in Professional</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>24/7 phone support</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>White-label solution</span>
+                    </li>
+                    <li class="flex items-center">
+                        <i class="fas fa-check text-green-500 mr-3"></i>
+                        <span>Custom integrations</span>
+                    </li>
+                </ul>
+                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
+                    Contact Sales
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                What Our Customers Say
+            </h2>
+            <p class="text-xl text-gray-600">
+                Join hundreds of satisfied hotspot providers across Kenya
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                        J
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-semibold">John Mwangi</h4>
+                        <p class="text-gray-600">ISP Owner, Nairobi</p>
+                    </div>
+                </div>
+                <p class="text-gray-700">"This tool has saved me hours of work. I can now generate configs for all my MikroTik routers in minutes. Highly recommended!"</p>
+            </div>
+            
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                        S
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-semibold">Sarah Wanjiku</h4>
+                        <p class="text-gray-600">Hotspot Provider, Mombasa</p>
+                    </div>
+                </div>
+                <p class="text-gray-700">"The Pesapal integration makes payments so easy for Kenyan customers. The configs are always perfect and ready to deploy."</p>
+            </div>
+            
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
+                        P
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="font-semibold">Peter Kimani</h4>
+                        <p class="text-gray-600">Network Engineer, Kisumu</p>
+                    </div>
+                </div>
+                <p class="text-gray-700">"Professional service with excellent support. The dashboard makes it easy to manage multiple hotspot locations."</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                Frequently Asked Questions
+            </h2>
+        </div>
+        
+        <div class="space-y-6">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">What MikroTik models are supported?</h3>
+                <p class="text-gray-600">We support all major MikroTik router models including RB750, RB951, RB2011, RB3011, and many more. Check our supported models list for the complete list.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">How do I pay for the service?</h3>
+                <p class="text-gray-600">We accept payments through Pesapal, which supports M-Pesa, Airtel Money, and all major Kenyan payment methods. Payments are secure and processed instantly.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">Can I customize the generated configs?</h3>
+                <p class="text-gray-600">Yes! You can customize hotspot names, IP addresses, DNS servers, bandwidth profiles, and voucher settings to match your specific requirements.</p>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-2">Is there a free trial?</h3>
+                <p class="text-gray-600">We offer a 7-day free trial for all new users. No credit card required. You can generate up to 5 configs during the trial period.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 bg-primary text-white">
+    <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Get Started?
+        </h2>
+        <p class="text-xl mb-8 text-blue-100">
+            Join hundreds of Kenyan hotspot providers who are already saving time and money with our config generator.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="/register" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition duration-200">
+                Start Free Trial
+            </a>
+            <a href="#contact" class="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary transition duration-200">
+                Contact Sales
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
