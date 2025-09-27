@@ -312,7 +312,13 @@ class Migration(migrations.Migration):
             name='customer_phone',
             field=models.CharField(blank=True, max_length=15, null=True),
         ),
-        migrations.AlterField(
+        # First, remove the old id field
+        migrations.RemoveField(
+            model_name='ticketsale',
+            name='id',
+        ),
+        # Then add the new id field with correct type
+        migrations.AddField(
             model_name='ticketsale',
             name='id',
             field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
