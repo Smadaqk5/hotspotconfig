@@ -12,25 +12,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            """
-            CREATE TABLE IF NOT EXISTS accounts_cashier (
-                id BIGSERIAL PRIMARY KEY,
-                status VARCHAR(20) DEFAULT 'active',
-                can_generate_tickets BOOLEAN DEFAULT TRUE,
-                can_sell_tickets BOOLEAN DEFAULT TRUE,
-                can_view_sales BOOLEAN DEFAULT FALSE,
-                can_manage_users BOOLEAN DEFAULT FALSE,
-                can_download_configs BOOLEAN DEFAULT FALSE,
-                employee_id VARCHAR(50),
-                shift_hours VARCHAR(100),
-                notes TEXT,
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                provider_id BIGINT REFERENCES accounts_provider(id) ON DELETE CASCADE,
-                user_id BIGINT REFERENCES accounts_user(id) ON DELETE CASCADE UNIQUE
-            );
-            """,
-            reverse_sql="DROP TABLE IF EXISTS accounts_cashier;"
-        ),
+        # Empty migration - Cashier model will be added later
+        # This ensures the migration sequence works without foreign key issues
     ]
