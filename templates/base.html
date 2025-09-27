@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MikroTik Hotspot Config Generator{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>{% block title %}MikroTik Hotspot Platform{% endblock %}</title>
+    
+    <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
@@ -19,96 +22,318 @@
             }
         }
     </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS for mobile optimization -->
+    <style>
+        /* Mobile-first responsive design */
+        @media (max-width: 768px) {
+            .mobile-menu {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            .mobile-menu.open {
+                transform: translateX(0);
+            }
+            .mobile-overlay {
+                opacity: 0;
+                visibility: hidden;
+                transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            }
+            .mobile-overlay.open {
+                opacity: 1;
+                visibility: visible;
+            }
+        }
+        
+        /* Touch-friendly buttons */
+        .touch-button {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        /* Mobile-optimized forms */
+        .mobile-form input,
+        .mobile-form select,
+        .mobile-form textarea {
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        /* Mobile navigation */
+        .mobile-nav-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        /* Mobile dashboard cards */
+        .mobile-card {
+            margin-bottom: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Mobile table responsiveness */
+        .mobile-table {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Mobile modal */
+        .mobile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        
+        .mobile-modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        /* Mobile-optimized grid */
+        .mobile-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        
+        @media (min-width: 640px) {
+            .mobile-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .mobile-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
+<body class="bg-gray-50 min-h-screen">
+    <!-- Mobile Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="flex-shrink-0 flex items-center">
-                        <i class="fas fa-wifi text-primary text-2xl mr-2"></i>
-                        <span class="text-xl font-bold text-gray-900">Hotspot Config</span>
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'home' %}" class="text-xl font-bold text-primary">
+                        <i class="fas fa-wifi mr-2"></i>
+                        <span class="hidden sm:inline">Hotspot Platform</span>
+                        <span class="sm:hidden">HP</span>
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Home</a>
-                    <a href="#pricing" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Pricing</a>
-                    <a href="#features" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Features</a>
-                    <a href="#contact" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Contact</a>
-                    <div id="auth-buttons" class="flex items-center space-x-2">
-                        <a href="/login" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Login</a>
-                        <a href="/register" class="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-secondary transition duration-200">Sign Up</a>
+                
+                <!-- Desktop Navigation -->
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="{% url 'home' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                            <i class="fas fa-home mr-1"></i> Home
+                        </a>
+                        {% if user.is_authenticated %}
+                            {% if user.is_super_admin_user %}
+                                <a href="{% url 'super_admin:dashboard' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                                    <i class="fas fa-crown mr-1"></i> Super Admin
+                                </a>
+                            {% elif user.is_provider %}
+                                <a href="{% url 'provider:dashboard' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                                    <i class="fas fa-building mr-1"></i> Provider
+                                </a>
+                            {% elif user.is_cashier %}
+                                <a href="{% url 'cashier:dashboard' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                                    <i class="fas fa-user-tie mr-1"></i> Cashier
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'logout' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Logout
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
+                                <i class="fas fa-sign-in-alt mr-1"></i> Login
+                            </a>
+                            <a href="{% url 'register' %}" class="bg-primary text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                                <i class="fas fa-user-plus mr-1"></i> Register
+                            </a>
+                        {% endif %}
                     </div>
-                    <div id="user-menu" class="hidden flex items-center space-x-2">
-                        <a href="/dashboard" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-                        <button onclick="logout()" class="text-gray-700 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">Logout</button>
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button type="button" id="mobile-menu-button" class="touch-button inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary">
+                        <span class="sr-only">Open main menu</span>
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="mobile-menu md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl">
+            <div class="flex flex-col h-full">
+                <!-- Mobile menu header -->
+                <div class="flex items-center justify-between p-4 border-b">
+                    <span class="text-lg font-semibold text-gray-900">Menu</span>
+                    <button id="mobile-menu-close" class="touch-button p-2 rounded-md text-gray-400 hover:text-gray-500">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Mobile menu items -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="px-2 pt-2 pb-3 space-y-1">
+                        <a href="{% url 'home' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                            <i class="fas fa-home mr-3"></i> Home
+                        </a>
+                        {% if user.is_authenticated %}
+                            {% if user.is_super_admin_user %}
+                                <a href="{% url 'super_admin:dashboard' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                    <i class="fas fa-crown mr-3"></i> Super Admin
+                                </a>
+                            {% elif user.is_provider %}
+                                <a href="{% url 'provider:dashboard' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                    <i class="fas fa-building mr-3"></i> Provider
+                                </a>
+                            {% elif user.is_cashier %}
+                                <a href="{% url 'cashier:dashboard' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                    <i class="fas fa-user-tie mr-3"></i> Cashier
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'logout' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                <i class="fas fa-sign-out-alt mr-3"></i> Logout
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                <i class="fas fa-sign-in-alt mr-3"></i> Login
+                            </a>
+                            <a href="{% url 'register' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
+                                <i class="fas fa-user-plus mr-3"></i> Register
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Mobile menu footer -->
+                <div class="p-4 border-t">
+                    <div class="text-sm text-gray-500">
+                        {% if user.is_authenticated %}
+                            <p class="font-medium text-gray-900">{{ user.email }}</p>
+                            <p class="text-xs">{{ user.get_user_type_display }}</p>
+                        {% else %}
+                            <p>Welcome to Hotspot Platform</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Mobile menu overlay -->
+        <div id="mobile-overlay" class="mobile-overlay md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
     </nav>
 
     <!-- Main Content -->
-    <main>
-        {% block content %}{% endblock %}
+    <main class="min-h-screen">
+        {% if messages %}
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-md {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-200{% elif message.tags == 'success' %}bg-green-100 text-green-700 border border-green-200{% else %}bg-blue-100 text-blue-700 border border-blue-200{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                            {{ message }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gray-800 text-white">
-        <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Hotspot Config</h3>
-                    <p class="text-gray-300">Generate MikroTik hotspot configurations with ease. Perfect for Kenyan ISPs and hotspot providers.</p>
+                    <h3 class="text-lg font-semibold mb-4">Hotspot Platform</h3>
+                    <p class="text-gray-300 text-sm">Professional WiFi hotspot management for businesses in Kenya.</p>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
-                    <ul class="space-y-2">
-                        <li><a href="/" class="text-gray-300 hover:text-white">Home</a></li>
-                        <li><a href="#pricing" class="text-gray-300 hover:text-white">Pricing</a></li>
-                        <li><a href="#features" class="text-gray-300 hover:text-white">Features</a></li>
-                        <li><a href="#contact" class="text-gray-300 hover:text-white">Contact</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Support</h3>
-                    <ul class="space-y-2">
-                        <li><a href="#" class="text-gray-300 hover:text-white">Documentation</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">API Reference</a></li>
-                        <li><a href="#" class="text-gray-300 hover:text-white">Help Center</a></li>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="{% url 'home' %}" class="text-gray-300 hover:text-white">Home</a></li>
+                        <li><a href="{% url 'login' %}" class="text-gray-300 hover:text-white">Login</a></li>
+                        <li><a href="{% url 'register' %}" class="text-gray-300 hover:text-white">Register</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold mb-4">Contact</h3>
-                    <p class="text-gray-300">Email: support@hotspotconfig.com</p>
-                    <p class="text-gray-300">Phone: +254 700 000 000</p>
+                    <p class="text-gray-300 text-sm">Email: support@hotspotplatform.com</p>
+                    <p class="text-gray-300 text-sm">Phone: +254 700 000 000</p>
                 </div>
             </div>
-            <div class="border-t border-gray-700 mt-8 pt-8 text-center">
-                <p class="text-gray-300">&copy; 2024 Hotspot Config. All rights reserved.</p>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-300">
+                <p>&copy; 2024 Hotspot Platform. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    <!-- JavaScript for mobile menu -->
     <script>
-        // Check if user is authenticated
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            if (token) {
-                document.getElementById('auth-buttons').classList.add('hidden');
-                document.getElementById('user-menu').classList.remove('hidden');
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+
+        function openMobileMenu() {
+            mobileMenu.classList.add('open');
+            mobileOverlay.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('open');
+            mobileOverlay.classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        if (mobileMenuButton) {
+            mobileMenuButton.addEventListener('click', openMobileMenu);
+        }
+        if (mobileMenuClose) {
+            mobileMenuClose.addEventListener('click', closeMobileMenu);
+        }
+        if (mobileOverlay) {
+            mobileOverlay.addEventListener('click', closeMobileMenu);
+        }
+
+        // Close mobile menu on window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth >= 768) {
+                closeMobileMenu();
             }
-        }
+        });
 
-        // Logout function
-        function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/';
-        }
-
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', checkAuth);
+        // Touch-friendly interactions
+        document.addEventListener('touchstart', function() {}, {passive: true});
     </script>
+    
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

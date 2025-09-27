@@ -11,6 +11,14 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/billing-templates/', include('billing_templates.urls')),
+
+    # Multi-level platform URLs
+    path('super-admin/', include('super_admin.urls')),
+    path('provider/', include('provider.urls')),
+    path('cashier/', include('cashier.urls')),
+    path('portal/', include('captive_portal.urls')),
+
+    # Original URLs
     path('', include('accounts.urls')),
     path('dashboard/', include('dashboard.urls')),
     path('dashboard/tickets/', include('tickets.urls')),

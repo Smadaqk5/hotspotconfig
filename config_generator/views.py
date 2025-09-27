@@ -10,7 +10,7 @@ from .serializers import (
     MikroTikModelSerializer, VoucherTypeSerializer, BandwidthProfileSerializer,
     ConfigTemplateSerializer, GeneratedConfigSerializer, ConfigGenerationSerializer
 )
-from subscriptions.models import Subscription
+from subscriptions.models import ProviderSubscription
 import json
 
 
@@ -57,7 +57,7 @@ def generate_config(request):
     """Generate MikroTik configuration"""
     # Check if user has active subscription
     try:
-        subscription = Subscription.objects.filter(
+        subscription = ProviderSubscription.objects.filter(
             user=request.user,
             is_active=True,
             status='active'
@@ -65,10 +65,10 @@ def generate_config(request):
         
         if subscription.is_expired():
             return Response(
-                {'error': 'Subscription expired'}, 
+                {'error': 'ProviderSubscription expired'}, 
                 status=status.HTTP_403_FORBIDDEN
             )
-    except Subscription.DoesNotExist:
+    except ProviderSubscription.DoesNotExist:
         return Response(
             {'error': 'No active subscription'}, 
             status=status.HTTP_403_FORBIDDEN
@@ -125,8 +125,8 @@ def generate_config(request):
     )
     
     # Update subscription usage
-    from subscriptions.models import SubscriptionUsage
-    usage, created = SubscriptionUsage.objects.get_or_create(subscription=subscription)
+    from subscriptions.models import ProviderSubscriptionUsage
+    usage, created = ProviderSubscriptionUsage.objects.get_or_create(subscription=subscription)
     usage.configs_generated += 1
     usage.save()
     

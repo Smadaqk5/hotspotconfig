@@ -1,20 +1,20 @@
 from rest_framework import serializers
-from .models import SubscriptionPlan, Subscription, SubscriptionUsage
+from .models import ProviderSubscriptionPlan, ProviderSubscription, SubscriptionUsage
 
 
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
+class ProviderSubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SubscriptionPlan
+        model = ProviderSubscriptionPlan
         fields = '__all__'
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
-    plan = SubscriptionPlanSerializer(read_only=True)
+class ProviderSubscriptionSerializer(serializers.ModelSerializer):
+    plan = ProviderSubscriptionPlanSerializer(read_only=True)
     days_remaining = serializers.SerializerMethodField()
     is_expired = serializers.SerializerMethodField()
     
     class Meta:
-        model = Subscription
+        model = ProviderSubscription
         fields = '__all__'
         read_only_fields = ('user', 'start_date', 'created_at', 'updated_at')
     

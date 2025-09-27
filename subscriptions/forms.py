@@ -1,7 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
 import json
-from .models import SubscriptionPlan
+from .models import ProviderSubscriptionPlan
 
 
 class SubscriptionPlanForm(forms.ModelForm):
@@ -14,7 +14,7 @@ class SubscriptionPlanForm(forms.ModelForm):
     )
     
     class Meta:
-        model = SubscriptionPlan
+        model = ProviderSubscriptionPlan
         fields = '__all__'
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3, 'cols': 50}),
@@ -86,7 +86,7 @@ class BulkPlanUpdateForm(forms.Form):
         widget=forms.NumberInput(attrs={'min': '1', 'max': '365'})
     )
     plans = forms.ModelMultipleChoiceField(
-        queryset=SubscriptionPlan.objects.all(),
+        queryset=ProviderSubscriptionPlan.objects.all(),
         widget=forms.CheckboxSelectMultiple,
         required=True
     )

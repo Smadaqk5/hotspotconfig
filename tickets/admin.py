@@ -12,25 +12,25 @@ from .models import (
 
 @admin.register(TicketType)
 class TicketTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'ticket_type', 'duration_display', 'price_display', 'is_active', 'is_popular', 'sort_order']
-    list_filter = ['ticket_type', 'is_active', 'is_popular', 'created_at']
-    search_fields = ['name', 'description']
-    list_editable = ['is_active', 'is_popular', 'sort_order']
-    ordering = ['sort_order', 'price']
+    list_display = ['name', 'provider', 'ticket_type', 'value', 'price', 'is_active', 'created_at']
+    list_filter = ['ticket_type', 'is_active', 'created_at']
+    search_fields = ['name', 'description', 'provider__business_name']
+    list_editable = ['is_active']
+    ordering = ['-created_at']
     
     fieldsets = (
         ('Basic Information', {
-            'fields': ('name', 'ticket_type', 'description', 'is_active', 'is_popular', 'sort_order')
+            'fields': ('provider', 'name', 'ticket_type', 'description', 'is_active')
         }),
         ('Configuration', {
-            'fields': ('duration_hours', 'data_limit_gb'),
-            'description': 'Configure based on ticket type'
+            'fields': ('value',),
+            'description': 'Value in hours for time-based, or GB for data-based'
         }),
         ('Pricing', {
-            'fields': ('price', 'currency')
+            'fields': ('price',)
         }),
         ('Metadata', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
@@ -38,136 +38,137 @@ class TicketTypeAdmin(admin.ModelAdmin):
     readonly_fields = ['created_at', 'updated_at']
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('created_by')
+        return super().get_queryset(request).select_related('provider')
 
 
 @admin.register(Ticket)
 class TicketAdmin(admin.ModelAdmin):
     list_display = [
-        'username', 'ticket_type', 'user', 'status', 'created_at', 
-        'activated_at', 'expires_at', 'is_synced_to_router'
+        'code', 'provider', 'ticket_type', 'status', 'created_at', 
+        'expires_at', 'price'
     ]
     list_filter = [
-        'status', 'ticket_type', 'is_synced_to_router', 'created_at', 
-        'activated_at', 'expires_at'
+        'status', 'ticket_type', 'created_at', 'expires_at'
     ]
-    search_fields = ['username', 'password', 'user__email', 'user__username']
+    search_fields = ['code', 'username', 'provider__business_name']
     list_editable = ['status']
     ordering = ['-created_at']
     
     fieldsets = (
         ('Ticket Information', {
-            'fields': ('ticket_type', 'user', 'username', 'password', 'status')
+            'fields': ('provider', 'ticket_type', 'code', 'username', 'password', 'status')
         }),
         ('Timing', {
-            'fields': ('created_at', 'activated_at', 'expires_at')
+            'fields': ('created_at', 'used_at', 'expires_at')
         }),
         ('Usage Tracking', {
-            'fields': ('data_used_bytes', 'time_used_seconds'),
+            'fields': ('time_used', 'data_used', 'max_time', 'max_data'),
             'classes': ('collapse',)
         }),
-        ('MikroTik Integration', {
-            'fields': ('mikrotik_username', 'mikrotik_profile', 'is_synced_to_router'),
-            'classes': ('collapse',)
-        }),
-        ('Additional Info', {
-            'fields': ('notes',),
-            'classes': ('collapse',)
+        ('Financial', {
+            'fields': ('price', 'currency')
         })
     )
     
-    readonly_fields = ['created_at', 'activated_at', 'data_used_bytes', 'time_used_seconds']
+    readonly_fields = ['created_at', 'updated_at']
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('ticket_type', 'user')
+        return super().get_queryset(request).select_related('ticket_type', 'provider')
     
     def get_readonly_fields(self, request, obj=None):
         if obj:  # Editing existing ticket
-            return self.readonly_fields + ['username', 'password']
+            return self.readonly_fields + ['code', 'username', 'password']
         return self.readonly_fields
 
 
 @admin.register(TicketSale)
 class TicketSaleAdmin(admin.ModelAdmin):
     list_display = [
-        'ticket', 'sold_by', 'sale_price', 'payment_method', 
-        'customer_name', 'sold_at'
+        'ticket', 'provider', 'customer_name', 'unit_price', 'total_amount', 
+        'status', 'sold_at'
     ]
-    list_filter = ['payment_method', 'sold_at', 'sold_by']
+    list_filter = ['status', 'payment_method', 'sold_at']
     search_fields = [
-        'ticket__username', 'customer_name', 'customer_phone', 
+        'ticket__code', 'customer_name', 'customer_phone', 
         'customer_email', 'payment_reference'
     ]
     ordering = ['-sold_at']
     
     fieldsets = (
         ('Sale Information', {
-            'fields': ('ticket', 'sold_by', 'sale_price', 'payment_method', 'payment_reference')
+            'fields': ('provider', 'ticket', 'quantity', 'unit_price', 'total_amount', 'currency')
         }),
         ('Customer Information', {
             'fields': ('customer_name', 'customer_phone', 'customer_email')
         }),
-        ('Additional Info', {
-            'fields': ('notes', 'sold_at'),
+        ('Payment', {
+            'fields': ('payment_method', 'payment_reference', 'status')
+        }),
+        ('Timestamps', {
+            'fields': ('sold_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
     
-    readonly_fields = ['sold_at']
+    readonly_fields = ['sold_at', 'updated_at']
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('ticket', 'sold_by')
+        return super().get_queryset(request).select_related('ticket', 'provider')
 
 
 @admin.register(TicketBatch)
 class TicketBatchAdmin(admin.ModelAdmin):
     list_display = [
-        'name', 'ticket_type', 'user', 'quantity', 'is_generated', 
-        'generated_at', 'created_at'
+        'batch_name', 'provider', 'ticket_type', 'quantity', 'generated_by', 
+        'created_at'
     ]
-    list_filter = ['is_generated', 'ticket_type', 'created_at']
-    search_fields = ['name', 'user__email', 'user__username']
+    list_filter = ['ticket_type', 'created_at']
+    search_fields = ['batch_name', 'provider__business_name', 'generated_by__email']
     ordering = ['-created_at']
     
     fieldsets = (
         ('Batch Information', {
-            'fields': ('name', 'ticket_type', 'user', 'quantity')
+            'fields': ('provider', 'ticket_type', 'batch_name', 'quantity', 'generated_by')
         }),
         ('Configuration', {
-            'fields': ('username_prefix', 'password_length')
+            'fields': ('start_code', 'end_code', 'expiry_days')
         }),
-        ('Status', {
-            'fields': ('is_generated', 'generated_at', 'created_at')
+        ('Timestamps', {
+            'fields': ('created_at',)
         })
     )
     
-    readonly_fields = ['is_generated', 'generated_at', 'created_at']
+    readonly_fields = ['created_at']
     
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('ticket_type', 'user')
+        return super().get_queryset(request).select_related('ticket_type', 'provider', 'generated_by')
 
 
 @admin.register(TicketUsage)
 class TicketUsageAdmin(admin.ModelAdmin):
     list_display = [
-        'ticket', 'timestamp', 'data_used_bytes', 'time_used_seconds', 
-        'ip_address'
+        'ticket', 'session_start', 'total_session_time', 'total_data_consumed', 
+        'ip_address', 'created_at'
     ]
-    list_filter = ['timestamp', 'ticket__ticket_type']
-    search_fields = ['ticket__username', 'ip_address']
-    ordering = ['-timestamp']
+    list_filter = ['created_at', 'ticket__ticket_type']
+    search_fields = ['ticket__code', 'ip_address']
+    ordering = ['-created_at']
     
     fieldsets = (
         ('Usage Information', {
-            'fields': ('ticket', 'timestamp', 'data_used_bytes', 'time_used_seconds')
+            'fields': ('ticket', 'session_start', 'session_end', 'total_session_time', 'total_data_consumed')
         }),
         ('Connection Info', {
-            'fields': ('ip_address', 'user_agent'),
+            'fields': ('ip_address', 'device_info'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         })
     )
     
-    readonly_fields = ['timestamp']
+    readonly_fields = ['created_at', 'updated_at']
     
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('ticket', 'ticket__ticket_type')

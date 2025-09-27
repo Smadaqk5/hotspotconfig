@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Welcome, {{ user.get_full_name|default:user.username }}!</h1>
+            <p class="mt-2 text-gray-600">Your personal dashboard</p>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <a href="/portal/" class="bg-blue-600 text-white px-6 py-4 rounded-lg text-center hover:bg-blue-700 transition-colors">
+                <i class="fas fa-wifi text-2xl mb-2 block"></i>
+                <h3 class="text-lg font-semibold">WiFi Access</h3>
+                <p class="text-sm opacity-90">Enter ticket code for internet access</p>
+            </a>
+            
+            <a href="#" class="bg-green-600 text-white px-6 py-4 rounded-lg text-center hover:bg-green-700 transition-colors">
+                <i class="fas fa-ticket-alt text-2xl mb-2 block"></i>
+                <h3 class="text-lg font-semibold">Buy Tickets</h3>
+                <p class="text-sm opacity-90">Purchase WiFi access tickets</p>
+            </a>
+            
+            <a href="#" class="bg-purple-600 text-white px-6 py-4 rounded-lg text-center hover:bg-purple-700 transition-colors">
+                <i class="fas fa-history text-2xl mb-2 block"></i>
+                <h3 class="text-lg font-semibold">Usage History</h3>
+                <p class="text-sm opacity-90">View your ticket usage</p>
+            </a>
+        </div>
+
+        <!-- Information Cards -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- How to Use -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">How to Use WiFi</h2>
+                <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                    <li>Connect to the WiFi network</li>
+                    <li>Open your browser (you'll be redirected to the portal)</li>
+                    <li>Enter your ticket code</li>
+                    <li>Click "Get Internet Access"</li>
+                    <li>Enjoy browsing!</li>
+                </ol>
+            </div>
+
+            <!-- Support -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Need Help?</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center">
+                        <i class="fas fa-phone text-primary mr-3"></i>
+                        <span class="text-sm text-gray-600">Contact support for assistance</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope text-primary mr-3"></i>
+                        <span class="text-sm text-gray-600">Email support for technical issues</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-question-circle text-primary mr-3"></i>
+                        <span class="text-sm text-gray-600">Check FAQ for common questions</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

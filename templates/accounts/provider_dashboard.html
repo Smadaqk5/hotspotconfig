@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">{{ provider.business_name }} Dashboard</h1>
+            <p class="mt-2 text-gray-600">Manage your hotspot business</p>
+        </div>
+
+        <!-- Provider Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Total Cashiers</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_cashiers }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Active Cashiers</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ active_cashiers }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                        <i class="fas fa-user-friends text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">End Users</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_end_users }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                        <i class="fas fa-ticket-alt text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Tickets Generated</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">0</dd>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Cashiers -->
+        <div class="bg-white shadow rounded-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">Recent Cashiers</h2>
+                <a href="#" class="text-primary hover:text-primary-dark text-sm font-medium">View All</a>
+            </div>
+            {% if recent_cashiers %}
+            <ul class="divide-y divide-gray-200">
+                {% for cashier in recent_cashiers %}
+                <li class="py-3 flex justify-between items-center">
+                    <div>
+                        <p class="text-sm font-medium text-gray-900">{{ cashier.user.get_full_name }}</p>
+                        <p class="text-sm text-gray-500">{{ cashier.user.email }}</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if cashier.status == 'active' %}bg-green-100 text-green-800
+                            {% else %}bg-red-100 text-red-800{% endif %}">
+                            {{ cashier.status|title }}
+                        </span>
+                        <div class="text-sm text-gray-500">
+                            {% if cashier.can_generate_tickets %}<i class="fas fa-plus-circle text-green-500"></i>{% endif %}
+                            {% if cashier.can_sell_tickets %}<i class="fas fa-shopping-cart text-blue-500"></i>{% endif %}
+                            {% if cashier.can_view_sales %}<i class="fas fa-chart-line text-purple-500"></i>{% endif %}
+                        </div>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-gray-600">No cashiers found. <a href="#" class="text-primary hover:text-primary-dark">Add your first cashier</a></p>
+            {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <a href="{% url 'provider:manage_tickets' %}" class="bg-blue-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-blue-700 transition-colors">
+                <i class="fas fa-ticket-alt mb-2 block text-xl"></i>
+                Manage Tickets
+            </a>
+            <a href="{% url 'provider:generate_tickets' %}" class="bg-green-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-green-700 transition-colors">
+                <i class="fas fa-plus-circle mb-2 block text-xl"></i>
+                Generate Tickets
+            </a>
+            <a href="#" class="bg-yellow-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-yellow-700 transition-colors">
+                <i class="fas fa-users mb-2 block text-xl"></i>
+                Manage Cashiers
+            </a>
+            <a href="#" class="bg-purple-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-purple-700 transition-colors">
+                <i class="fas fa-download mb-2 block text-xl"></i>
+                Download Configs
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

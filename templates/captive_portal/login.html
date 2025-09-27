@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-6 sm:space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <div class="mx-auto h-12 w-12 bg-primary rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-wifi text-white text-xl"></i>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">
+                {% if provider %}
+                    {{ provider.business_name }} WiFi
+                {% else %}
+                    WiFi Access
+                {% endif %}
+            </h2>
+            <p class="mt-2 text-sm sm:text-base text-gray-600">
+                Enter your ticket code to get internet access
+            </p>
+        </div>
+
+        <!-- Login Form -->
+        <div class="bg-white py-6 sm:py-8 px-4 sm:px-6 lg:px-8 shadow rounded-lg">
+            <form class="space-y-4 sm:space-y-6 mobile-form" method="post" id="ticket-form">
+                {% csrf_token %}
+                
+                {% if error %}
+                <div class="mb-4 p-3 rounded-md bg-red-100 text-red-700 border border-red-200">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        {{ error }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div>
+                    <label for="ticket_code" class="block text-sm font-medium text-gray-700 mb-2">Ticket Code</label>
+                    <input id="ticket_code" name="ticket_code" type="text" required 
+                           class="mobile-form-input mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary text-base text-center font-mono tracking-wider"
+                           placeholder="Enter your ticket code"
+                           autocomplete="off"
+                           autocorrect="off"
+                           autocapitalize="off"
+                           spellcheck="false">
+                </div>
+
+                <div>
+                    <button type="submit" class="touch-button w-full bg-primary text-white py-3 px-4 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary flex items-center justify-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Get Internet Access
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Instructions -->
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">How to get internet access:</h3>
+            <ol class="text-xs sm:text-sm text-gray-600 space-y-2">
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">1</span>
+                    Purchase a WiFi ticket from the hotspot provider
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">2</span>
+                    Enter your ticket code in the field above
+                </li>
+                <li class="flex items-start">
+                    <span class="flex-shrink-0 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold mr-3 mt-0.5">3</span>
+                    Enjoy your internet access!
+                </li>
+            </ol>
+        </div>
+
+        <!-- Provider Info -->
+        {% if provider %}
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Provider Information</h3>
+            <div class="text-xs sm:text-sm text-gray-600">
+                <p><strong>Business:</strong> {{ provider.business_name }}</p>
+                {% if provider.contact_phone %}
+                <p><strong>Contact:</strong> {{ provider.contact_phone }}</p>
+                {% endif %}
+                {% if provider.address %}
+                <p><strong>Location:</strong> {{ provider.address }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-gray-500">
+            <p>Powered by MikroTik Hotspot Platform</p>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for form handling -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('ticket-form');
+    const ticketCodeInput = document.getElementById('ticket_code');
+    
+    // Auto-format ticket code (uppercase, remove spaces)
+    ticketCodeInput.addEventListener('input', function(e) {
+        e.target.value = e.target.value.toUpperCase().replace(/\s/g, '');
+    });
+    
+    // Form submission with loading state
+    form.addEventListener('submit', function(e) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        submitButton.disabled = true;
+        
+        // Re-enable after 3 seconds (in case of network issues)
+        setTimeout(function() {
+            submitButton.innerHTML = originalText;
+            submitButton.disabled = false;
+        }, 3000);
+    });
+    
+    // Focus on ticket code input
+    ticketCodeInput.focus();
+});
+</script>
+{% endblock %}

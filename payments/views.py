@@ -6,7 +6,7 @@ from django.conf import settings
 from .models import Payment, PaymentItem
 from .serializers import PaymentSerializer, CreatePaymentSerializer
 from .pesapal import PesapalAPI
-from subscriptions.models import SubscriptionPlan, Subscription
+from subscriptions.models import ProviderSubscriptionPlan, ProviderSubscription
 import json
 
 

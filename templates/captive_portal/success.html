@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Access Granted{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-6 sm:space-y-8">
+        <!-- Success Header -->
+        <div class="text-center">
+            <div class="mx-auto h-16 w-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-check text-white text-2xl"></i>
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900">Access Granted!</h2>
+            <p class="mt-2 text-sm sm:text-base text-gray-600">
+                You now have internet access. Enjoy browsing!
+            </p>
+        </div>
+
+        <!-- Ticket Information -->
+        {% if ticket %}
+        <div class="bg-white py-6 sm:py-8 px-4 sm:px-6 lg:px-8 shadow rounded-lg">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Your Ticket Details</h3>
+            <div class="space-y-3">
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-sm font-medium text-gray-500">Ticket Code:</span>
+                    <span class="text-sm font-mono text-gray-900">{{ ticket.code }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-sm font-medium text-gray-500">Type:</span>
+                    <span class="text-sm text-gray-900">{{ ticket.ticket_type.name }}</span>
+                </div>
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-sm font-medium text-gray-500">Duration:</span>
+                    <span class="text-sm text-gray-900">
+                        {% if ticket.ticket_type.ticket_type == 'time' %}
+                            {{ ticket.ticket_type.value }} hours
+                        {% else %}
+                            {{ ticket.ticket_type.value }} GB
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center py-2">
+                    <span class="text-sm font-medium text-gray-500">Expires:</span>
+                    <span class="text-sm text-gray-900">{{ ticket.expires_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Usage Instructions -->
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-900 mb-3">What you can do now:</h3>
+            <ul class="text-xs sm:text-sm text-gray-600 space-y-2">
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-0.5"></i>
+                    Browse the internet freely
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-0.5"></i>
+                    Use social media and messaging apps
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-0.5"></i>
+                    Stream videos and music
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-check text-green-500 mr-2 mt-0.5"></i>
+                    Download files and apps
+                </li>
+            </ul>
+        </div>
+
+        <!-- Provider Info -->
+        {% if provider %}
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Provider Information</h3>
+            <div class="text-xs sm:text-sm text-gray-600">
+                <p><strong>Business:</strong> {{ provider.business_name }}</p>
+                {% if provider.contact_phone %}
+                <p><strong>Contact:</strong> {{ provider.contact_phone }}</p>
+                {% endif %}
+                {% if provider.address %}
+                <p><strong>Location:</strong> {{ provider.address }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Support -->
+        <div class="bg-white p-4 sm:p-6 rounded-lg shadow">
+            <h3 class="text-sm font-medium text-gray-900 mb-2">Need Help?</h3>
+            <p class="text-xs sm:text-sm text-gray-600 mb-3">
+                If you experience any issues with your internet connection, please contact the hotspot provider.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2">
+                <button onclick="window.location.reload()" class="touch-button bg-primary text-white px-4 py-2 rounded-md text-xs font-medium hover:bg-blue-700 transition-colors flex items-center justify-center">
+                    <i class="fas fa-refresh mr-2"></i>Refresh Connection
+                </button>
+                <button onclick="window.open('https://www.google.com', '_blank')" class="touch-button bg-green-600 text-white px-4 py-2 rounded-md text-xs font-medium hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i class="fas fa-external-link-alt mr-2"></i>Test Connection
+                </button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-xs text-gray-500">
+            <p>Powered by MikroTik Hotspot Platform</p>
+        </div>
+    </div>
+</div>
+
+<!-- Auto-refresh to test connection -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh after 5 seconds to test connection
+    setTimeout(function() {
+        // Try to load a small image to test connection
+        const img = new Image();
+        img.onload = function() {
+            console.log('Internet connection is working!');
+        };
+        img.onerror = function() {
+            console.log('Connection test failed, but this is normal in captive portal');
+        };
+        img.src = 'https://www.google.com/favicon.ico?' + new Date().getTime();
+    }, 5000);
+});
+</script>
+{% endblock %}

@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'billing_templates',
     'tickets',
     'reports',
+    'super_admin',
+    'provider',
+    'cashier',
+    'captive_portal',
 ]
 
 MIDDLEWARE = [

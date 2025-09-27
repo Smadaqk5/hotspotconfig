@@ -3,37 +3,38 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import path
 from django.http import HttpResponseRedirect
-from .models import SubscriptionPlan, Subscription, SubscriptionUsage
+from .models import ProviderSubscriptionPlan, ProviderSubscription, SubscriptionUsage
 from .forms import SubscriptionPlanForm, BulkPlanUpdateForm
 from .admin_dashboard import SubscriptionDashboard
 
 
-@admin.register(SubscriptionPlan)
-class SubscriptionPlanAdmin(admin.ModelAdmin):
-    form = SubscriptionPlanForm
-    list_display = ('name', 'price', 'duration_days', 'is_active', 'subscriber_count')
-    list_filter = ('is_active', 'duration_days')
+@admin.register(ProviderSubscriptionPlan)
+class ProviderSubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = ('name', 'plan_type', 'price', 'currency', 'duration_days', 'is_active', 'is_popular')
+    list_filter = ('is_active', 'is_popular', 'plan_type', 'duration_days')
     search_fields = ('name', 'description')
-    ordering = ('price',)
-    list_editable = ('price', 'duration_days', 'is_active')
-    actions = ['activate_plans', 'deactivate_plans', 'bulk_update_plans']
+    ordering = ('sort_order', 'price')
+    list_editable = ('price', 'is_active', 'is_popular')
+    actions = ['activate_plans', 'deactivate_plans']
     
     fieldsets = (
         ('Plan Details', {
-            'fields': ('name', 'description', 'price', 'duration_days', 'is_active')
+            'fields': ('name', 'plan_type', 'description', 'price', 'currency', 'duration_days', 'is_active', 'is_popular', 'sort_order')
         }),
         ('Features', {
-            'fields': ('features_text',),
-            'description': 'Enter features as a JSON array, e.g., ["Feature 1", "Feature 2"]'
+            'fields': ('max_tickets_per_month', 'max_locations', 'max_end_users', 'api_access', 'custom_branding', 'priority_support', 'advanced_analytics')
+        }),
+        ('Limits', {
+            'fields': ('max_ticket_types', 'max_config_templates', 'storage_limit_gb')
         }),
     )
     
     def get_queryset(self, request):
-        return super().get_queryset(request).order_by('price')
+        return super().get_queryset(request).order_by('sort_order', 'price')
     
     def subscriber_count(self, obj):
         """Show number of active subscribers for this plan"""
-        return obj.subscription_set.filter(is_active=True, status='active').count()
+        return obj.subscriptions.filter(status='active').count()
     subscriber_count.short_description = 'Active Subscribers'
     
     def activate_plans(self, request, queryset):
@@ -111,17 +112,23 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
         )
 
 
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('user', 'plan', 'status', 'start_date', 'end_date', 'is_active', 'auto_renew')
-    list_filter = ('status', 'is_active', 'auto_renew', 'plan', 'start_date')
-    search_fields = ('user__email', 'user__username', 'plan__name')
+@admin.register(ProviderSubscription)
+class ProviderSubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('provider', 'plan', 'status', 'start_date', 'end_date', 'auto_renew')
+    list_filter = ('status', 'auto_renew', 'plan', 'start_date')
+    search_fields = ('provider__user__email', 'provider__business_name', 'plan__name')
     readonly_fields = ('created_at', 'updated_at')
     ordering = ('-created_at',)
     
     fieldsets = (
         ('Subscription Details', {
-            'fields': ('user', 'plan', 'status', 'start_date', 'end_date', 'is_active', 'auto_renew')
+            'fields': ('provider', 'plan', 'status', 'start_date', 'end_date', 'auto_renew')
+        }),
+        ('Payment', {
+            'fields': ('amount_paid', 'currency', 'payment_method', 'payment_reference')
+        }),
+        ('Usage', {
+            'fields': ('tickets_generated', 'tickets_sold', 'revenue_generated')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -132,7 +139,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
 
 @admin.register(SubscriptionUsage)
 class SubscriptionUsageAdmin(admin.ModelAdmin):
-    list_display = ('subscription', 'configs_generated', 'last_used')
-    list_filter = ('last_used',)
-    search_fields = ('subscription__user__email', 'subscription__user__username')
-    readonly_fields = ('last_used',)
+    list_display = ('subscription', 'current_month_tickets', 'total_tickets_generated', 'last_reset_date')
+    list_filter = ('last_reset_date',)
+    search_fields = ('subscription__provider__user__email', 'subscription__provider__business_name')
+    readonly_fields = ('last_reset_date', 'created_at', 'updated_at')

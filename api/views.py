@@ -12,14 +12,14 @@ from datetime import timedelta
 
 # Import models
 from accounts.models import User, UserProfile
-from subscriptions.models import SubscriptionPlan, Subscription, SubscriptionUsage
+from subscriptions.models import ProviderSubscriptionPlan, ProviderSubscription, SubscriptionUsage
 from payments.models import Payment, PaymentItem
 from config_generator.models import MikroTikModel, VoucherType, BandwidthProfile, ConfigTemplate, GeneratedConfig
 from billing_templates.models import BillingTemplate
 
 # Import serializers
 from accounts.serializers import UserSerializer, UserProfileSerializer
-from subscriptions.serializers import SubscriptionPlanSerializer, SubscriptionSerializer
+from subscriptions.serializers import ProviderSubscriptionPlanSerializer, ProviderSubscriptionSerializer
 from payments.serializers import PaymentSerializer, PaymentItemSerializer
 from config_generator.serializers import (
     MikroTikModelSerializer, VoucherTypeSerializer, BandwidthProfileSerializer,
@@ -45,10 +45,10 @@ class APIStatsView(APIView):
         
         # Subscription stats
         subscription_stats = {
-            'total_plans': SubscriptionPlan.objects.count(),
-            'active_plans': SubscriptionPlan.objects.filter(is_active=True).count(),
-            'total_subscriptions': Subscription.objects.count(),
-            'active_subscriptions': Subscription.objects.filter(is_active=True, status='active').count(),
+            'total_plans': ProviderSubscriptionPlan.objects.count(),
+            'active_plans': ProviderSubscriptionPlan.objects.filter(is_active=True).count(),
+            'total_subscriptions': ProviderSubscription.objects.count(),
+            'active_subscriptions': ProviderSubscription.objects.filter(is_active=True, status='active').count(),
         }
         
         # Payment stats
@@ -87,12 +87,12 @@ class UserStatsView(APIView):
         
         # User subscription info
         try:
-            subscription = Subscription.objects.filter(
+            subscription = ProviderSubscription.objects.filter(
                 user=user,
                 is_active=True
             ).latest('created_at')
-            subscription_data = SubscriptionSerializer(subscription).data
-        except Subscription.DoesNotExist:
+            subscription_data = ProviderSubscriptionSerializer(subscription).data
+        except ProviderSubscription.DoesNotExist:
             subscription_data = None
         
         # User payment history
@@ -127,8 +127,8 @@ class UserStatsView(APIView):
 
 class PublicPlansView(generics.ListAPIView):
     """Public subscription plans (no authentication required)"""
-    queryset = SubscriptionPlan.objects.filter(is_active=True)
-    serializer_class = SubscriptionPlanSerializer
+    queryset = ProviderSubscriptionPlan.objects.filter(is_active=True)
+    serializer_class = ProviderSubscriptionPlanSerializer
     permission_classes = [permissions.AllowAny]
 
 

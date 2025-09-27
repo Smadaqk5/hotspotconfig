@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.db.models import Count, Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
-from .models import SubscriptionPlan, Subscription, SubscriptionUsage
+from .models import ProviderSubscriptionPlan, ProviderSubscription, SubscriptionUsage
 
 
 class SubscriptionDashboard:

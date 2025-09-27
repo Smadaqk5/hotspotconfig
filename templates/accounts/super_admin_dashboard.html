@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Super Admin Dashboard</h1>
+            <p class="mt-2 text-gray-600">Manage the entire MikroTik Hotspot Platform</p>
+        </div>
+
+        <!-- Global Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                        <i class="fas fa-building text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Total Providers</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_providers }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Active Providers</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ active_providers }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-yellow-100 rounded-md p-3">
+                        <i class="fas fa-users text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">Total Cashiers</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_cashiers }}</dd>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-100 rounded-md p-3">
+                        <i class="fas fa-user-friends text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <dt class="text-sm font-medium text-gray-500">End Users</dt>
+                        <dd class="mt-1 text-3xl font-semibold text-gray-900">{{ total_end_users }}</dd>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Providers</h2>
+                {% if recent_providers %}
+                <ul class="divide-y divide-gray-200">
+                    {% for provider in recent_providers %}
+                    <li class="py-3 flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ provider.business_name }}</p>
+                            <p class="text-sm text-gray-500">{{ provider.user.email }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if provider.status == 'active' %}bg-green-100 text-green-800
+                                {% elif provider.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ provider.status|title }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-600">No providers found.</p>
+                {% endif %}
+            </div>
+
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Cashiers</h2>
+                {% if recent_cashiers %}
+                <ul class="divide-y divide-gray-200">
+                    {% for cashier in recent_cashiers %}
+                    <li class="py-3 flex justify-between items-center">
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">{{ cashier.user.get_full_name }}</p>
+                            <p class="text-sm text-gray-500">{{ cashier.provider.business_name }}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if cashier.status == 'active' %}bg-green-100 text-green-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ cashier.status|title }}
+                            </span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-gray-600">No cashiers found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{% url 'super_admin:provider_list' %}" class="bg-blue-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Manage Providers
+                </a>
+                <a href="/admin/" class="bg-green-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-green-700 transition-colors">
+                    System Admin
+                </a>
+                <a href="#" class="bg-purple-600 text-white px-4 py-3 rounded-md text-center text-sm font-medium hover:bg-purple-700 transition-colors">
+                    Analytics
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

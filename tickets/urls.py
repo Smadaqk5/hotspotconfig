@@ -1,8 +1,7 @@
 """
 URL configuration for tickets app
 """
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import tickets_list, tickets_generate
 
 urlpatterns = [

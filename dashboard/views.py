@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.utils import timezone
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from subscriptions.models import Subscription, SubscriptionUsage
+from subscriptions.models import ProviderSubscription, SubscriptionUsage
 from payments.models import Payment
 from config_generator.models import GeneratedConfig
 
@@ -17,7 +17,7 @@ def dashboard_stats(request):
     
     # Get current subscription
     try:
-        subscription = Subscription.objects.filter(
+        subscription = ProviderSubscription.objects.filter(
             user=user,
             is_active=True
         ).latest('created_at')
@@ -34,18 +34,18 @@ def dashboard_stats(request):
         
         # Get usage stats
         try:
-            usage = SubscriptionUsage.objects.get(subscription=subscription)
+            usage = ProviderSubscriptionUsage.objects.get(subscription=subscription)
             usage_data = {
                 'configs_generated': usage.configs_generated,
                 'last_used': usage.last_used,
             }
-        except SubscriptionUsage.DoesNotExist:
+        except ProviderSubscriptionUsage.DoesNotExist:
             usage_data = {
                 'configs_generated': 0,
                 'last_used': None,
             }
             
-    except Subscription.DoesNotExist:
+    except ProviderSubscription.DoesNotExist:
         subscription_data = None
         usage_data = None
     
@@ -92,7 +92,7 @@ def dashboard_stats(request):
 def subscription_status(request):
     """Get detailed subscription status"""
     try:
-        subscription = Subscription.objects.filter(
+        subscription = ProviderSubscription.objects.filter(
             user=request.user,
             is_active=True
         ).latest('created_at')
@@ -112,7 +112,7 @@ def subscription_status(request):
                 'created_at': subscription.created_at,
             }
         })
-    except Subscription.DoesNotExist:
+    except ProviderSubscription.DoesNotExist:
         return Response({
             'has_subscription': False,
             'message': 'No active subscription found'
