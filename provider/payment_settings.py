@@ -13,7 +13,7 @@ from django.views.decorators.http import require_http_methods
 from accounts.models import Provider
 from accounts.encryption import encrypt_mpesa_credential, decrypt_mpesa_credential
 from payments.payment_bucket import PaymentBucketService
-from accounts.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test
 import json
 import logging
 
