@@ -1,18 +1,20 @@
 {
-  "name": "mikrotik-hotspot-config",
+  "name": "mikrotik-hotspot-testing",
   "version": "1.0.0",
-  "description": "MikroTik Hotspot Configuration Website with Pesapal Payments",
+  "description": "End-to-end tests for MikroTik Hotspot Ticketing & Config Platform",
   "scripts": {
-    "build": "npm run build:css",
-    "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/output.css --watch",
-    "dev": "npm run build:css"
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "install:browsers": "playwright install"
   },
   "devDependencies": {
-    "tailwindcss": "^3.3.6",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.32"
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0"
   },
   "dependencies": {
-    "alpinejs": "^3.13.3"
+    "dotenv": "^16.3.1"
   }
 }
