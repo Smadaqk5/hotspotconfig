@@ -11,7 +11,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('api/billing-templates/', include('billing_templates.urls')),
-    path('', include('tickets.urls')),
+    path('api/tickets/', include('tickets.urls')),
+    path('', include('accounts.urls')),
+    path('', include('dashboard.urls')),
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
 ]
 
