@@ -5,6 +5,10 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.views.generic import TemplateView
+from django.http import JsonResponse
 from .models import User, UserProfile
 from .serializers import UserRegistrationSerializer, UserLoginSerializer, UserSerializer, UserProfileSerializer
 
@@ -70,3 +74,57 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 def user_info(request):
     """Get current user information"""
     return Response(UserSerializer(request.user).data)
+
+
+# HTML Form Views
+class RegistrationFormView(TemplateView):
+    """HTML registration form"""
+    template_name = 'accounts/register.html'
+    
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+    
+    def post(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.POST)
+        if serializer.is_valid():
+            user = serializer.save()
+            token, created = Token.objects.get_or_create(user=user)
+            login(request, user)
+            messages.success(request, 'Registration successful! Welcome to Hotspot Config.')
+            return redirect('dashboard')
+        else:
+            for field, errors in serializer.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        return render(request, self.template_name)
+
+
+class LoginFormView(TemplateView):
+    """HTML login form"""
+    template_name = 'accounts/login.html'
+    
+    def get(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('dashboard')
+        return render(request, self.template_name)
+    
+    def post(self, request, *args, **kwargs):
+        serializer = UserLoginSerializer(data=request.POST)
+        if serializer.is_valid():
+            user = serializer.validated_data['user']
+            login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            messages.success(request, f'Welcome back, {user.first_name or user.username}!')
+            return redirect('dashboard')
+        else:
+            for field, errors in serializer.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+        return render(request, self.template_name)
+
+
+def logout_form_view(request):
+    """HTML logout view"""
+    logout(request)
+    messages.info(request, 'You have been logged out successfully.')
+    return redirect('home')
