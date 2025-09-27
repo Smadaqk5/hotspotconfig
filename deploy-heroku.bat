@@ -28,10 +28,10 @@ echo DEBUG=False
 echo ALLOWED_HOSTS=your-hotspot-ticketing-app.herokuapp.com
 echo.
 echo 📊 Database Configuration (Supabase):
-echo DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-echo SUPABASE_URL=https://your-project.supabase.co
-echo SUPABASE_KEY=your-supabase-anon-key
-echo SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+echo DATABASE_URL=postgresql://postgres.abcdefghijklmnop:[password]@aws-0-us-east-1.pooler.supabase.com:6543/postgres
+echo SUPABASE_URL=https://abcdefghijklmnop.supabase.co
+echo SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...your-anon-key
+echo SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...your-service-role-key
 echo.
 echo 💳 Payment Configuration:
 echo PESAPAL_CONSUMER_KEY=your-pesapal-consumer-key
@@ -55,6 +55,14 @@ echo 3. Generate a new app password for "Mail"
 echo 4. Use the generated app password (not your regular password)
 echo 5. Set EMAIL_HOST_USER to your Gmail address
 echo 6. Set EMAIL_HOST_PASSWORD to the generated app password
+echo.
+echo 📝 Supabase Database Setup Instructions:
+echo 1. Go to https://supabase.com/dashboard
+echo 2. Create a new project
+echo 3. Go to Settings ^> Database
+echo 4. Copy the "Connection string" under "Connection pooling"
+echo 5. Use the pooled connection string as your DATABASE_URL
+echo 6. Go to Settings ^> API to get your API keys
 echo.
 echo 🔄 Optional Services:
 echo REDIS_URL=redis://your-redis-provider.com:6379
