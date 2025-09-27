@@ -5,4 +5,5 @@ urlpatterns = [
     path('', views.dashboard_view, name='dashboard'),
     path('stats/', views.dashboard_stats, name='dashboard_stats'),
     path('subscription/', views.subscription_status, name='subscription_status'),
+    path('profile/', views.profile_view, name='profile'),
 ]

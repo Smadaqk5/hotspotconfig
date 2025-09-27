@@ -126,3 +126,12 @@ def dashboard_view(request):
         'user': request.user,
         'page_title': 'Dashboard'
     })
+
+
+@login_required
+def profile_view(request):
+    """User profile view"""
+    return render(request, 'profile.html', {
+        'user': request.user,
+        'page_title': 'Profile'
+    })
