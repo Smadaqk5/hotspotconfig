@@ -12,11 +12,11 @@ echo.
 echo 🔧 Setting up Heroku app...
 heroku create your-hotspot-ticketing-app
 
-echo 📦 Adding required addons...
-heroku addons:create heroku-postgresql:hobby-dev
-heroku addons:create heroku-redis:hobby-dev
-heroku addons:create sendgrid:starter
-heroku addons:create scheduler:standard
+echo 📦 Skipping add-ons (using external services instead)...
+echo Using external PostgreSQL database (Supabase)
+echo Using external Redis service (optional)
+echo Using external email service (SendGrid API)
+echo Using external task scheduler (optional)
 
 echo ⚙️ Setting environment variables...
 echo Please update these with your actual values:
@@ -26,18 +26,38 @@ echo 🔑 Required Environment Variables:
 echo SECRET_KEY=your-super-secret-key-here
 echo DEBUG=False
 echo ALLOWED_HOSTS=your-hotspot-ticketing-app.herokuapp.com
-echo DATABASE_URL=postgresql://username:password@host:port/database
+echo.
+echo 📊 Database Configuration (Supabase):
+echo DATABASE_URL=postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
 echo SUPABASE_URL=https://your-project.supabase.co
 echo SUPABASE_KEY=your-supabase-anon-key
 echo SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+echo.
+echo 💳 Payment Configuration:
 echo PESAPAL_CONSUMER_KEY=your-pesapal-consumer-key
 echo PESAPAL_CONSUMER_SECRET=your-pesapal-consumer-secret
 echo PESAPAL_BASE_URL=https://cybqa.pesapal.com/pesapalv3/api/
 echo PESAPAL_CALLBACK_URL=https://your-hotspot-ticketing-app.herokuapp.com/api/payments/pesapal/callback/
 echo PESAPAL_IPN_URL=https://your-hotspot-ticketing-app.herokuapp.com/api/payments/pesapal/ipn/
-echo SENDGRID_API_KEY=your-sendgrid-api-key
-echo DEFAULT_FROM_EMAIL=noreply@yourdomain.com
-echo REDIS_URL=redis://localhost:6379
+echo.
+echo 📧 Gmail SMTP Configuration:
+echo EMAIL_HOST=smtp.gmail.com
+echo EMAIL_PORT=587
+echo EMAIL_USE_TLS=True
+echo EMAIL_HOST_USER=your-gmail@gmail.com
+echo EMAIL_HOST_PASSWORD=your-gmail-app-password
+echo DEFAULT_FROM_EMAIL=your-gmail@gmail.com
+echo.
+echo 📝 Gmail Setup Instructions:
+echo 1. Enable 2-Factor Authentication on your Gmail account
+echo 2. Go to Google Account Settings ^> Security ^> App passwords
+echo 3. Generate a new app password for "Mail"
+echo 4. Use the generated app password (not your regular password)
+echo 5. Set EMAIL_HOST_USER to your Gmail address
+echo 6. Set EMAIL_HOST_PASSWORD to the generated app password
+echo.
+echo 🔄 Optional Services:
+echo REDIS_URL=redis://your-redis-provider.com:6379
 echo FRONTEND_URL=https://your-hotspot-ticketing-app.herokuapp.com
 
 echo.
@@ -55,9 +75,14 @@ echo ✅ Deployment complete!
 echo 🌐 Your app is available at: https://your-hotspot-ticketing-app.herokuapp.com
 echo.
 echo 📋 Next steps:
-echo 1. Set up scheduled jobs in Heroku Scheduler
-echo 2. Configure your domain (optional)
-echo 3. Test all features
-echo 4. Start serving customers!
+echo 1. Set up external services:
+echo    - Supabase database (free tier available)
+echo    - Gmail account with 2FA enabled
+echo    - Optional: Redis provider (Redis Cloud, etc.)
+echo 2. Configure Gmail app password (see instructions above)
+echo 3. Configure scheduled tasks (use external cron service or Heroku Scheduler)
+echo 4. Configure your domain (optional)
+echo 5. Test all features
+echo 6. Start serving customers!
 echo.
 pause
