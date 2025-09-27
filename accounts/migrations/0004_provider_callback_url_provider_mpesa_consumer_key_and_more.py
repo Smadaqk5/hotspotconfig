@@ -5,6 +5,75 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+def ensure_provider_table_exists(apps, schema_editor):
+    """
+    Ensure the Provider table exists before adding fields to it.
+    This handles cases where Heroku starts with a clean database.
+    """
+    db_alias = schema_editor.connection.alias
+    
+    # Check if the table exists
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_schema = 'public' 
+                AND table_name = 'accounts_provider'
+            );
+        """)
+        table_exists = cursor.fetchone()[0]
+    
+    if not table_exists:
+        # If Provider table doesn't exist, we need to create it first
+        # This should not happen in normal circumstances, but ensures Heroku deployment works
+        from django.db import connection
+        with connection.cursor() as cursor:
+            # Create the Provider table with basic structure
+            cursor.execute("""
+                CREATE TABLE accounts_provider (
+                    id BIGSERIAL PRIMARY KEY,
+                    status VARCHAR(20) DEFAULT 'pending',
+                    license_number VARCHAR(100) UNIQUE NOT NULL,
+                    business_name VARCHAR(200) NOT NULL,
+                    business_type VARCHAR(100) NOT NULL,
+                    registration_number VARCHAR(100),
+                    tax_id VARCHAR(100),
+                    contact_person VARCHAR(200) NOT NULL,
+                    contact_phone VARCHAR(15) NOT NULL,
+                    contact_email VARCHAR(254) NOT NULL,
+                    address TEXT NOT NULL,
+                    city VARCHAR(100) NOT NULL,
+                    county VARCHAR(100) NOT NULL,
+                    country VARCHAR(100) DEFAULT 'Kenya',
+                    service_areas TEXT,
+                    number_of_locations INTEGER DEFAULT 1,
+                    estimated_monthly_users INTEGER DEFAULT 100,
+                    bank_name VARCHAR(100),
+                    bank_account VARCHAR(100),
+                    mpesa_number VARCHAR(15),
+                    subscription_status VARCHAR(20) DEFAULT 'inactive',
+                    subscription_start_date TIMESTAMP WITH TIME ZONE,
+                    subscription_end_date TIMESTAMP WITH TIME ZONE,
+                    is_approved BOOLEAN DEFAULT FALSE,
+                    approved_at TIMESTAMP WITH TIME ZONE,
+                    business_license VARCHAR(100),
+                    tax_certificate VARCHAR(100),
+                    id_copy VARCHAR(100),
+                    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                    approved_by_id BIGINT,
+                    user_id BIGINT UNIQUE NOT NULL,
+                    FOREIGN KEY (approved_by_id) REFERENCES accounts_user(id),
+                    FOREIGN KEY (user_id) REFERENCES accounts_user(id)
+                );
+            """)
+
+
+def reverse_ensure_provider_table_exists(apps, schema_editor):
+    """Reverse operation - do nothing"""
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,6 +81,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(
+            ensure_provider_table_exists,
+            reverse_ensure_provider_table_exists,
+        ),
         migrations.AddField(
             model_name='provider',
             name='callback_url',
