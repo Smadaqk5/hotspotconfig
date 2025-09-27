@@ -174,7 +174,13 @@ class Migration(migrations.Migration):
             name='provider',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='accounts.provider'),
         ),
-        migrations.AlterField(
+        # First, remove the old subscription field
+        migrations.RemoveField(
+            model_name='subscriptionusage',
+            name='subscription',
+        ),
+        # Then add the new subscription field with correct type
+        migrations.AddField(
             model_name='subscriptionusage',
             name='subscription',
             field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='usage_tracking', to='subscriptions.providersubscription'),
