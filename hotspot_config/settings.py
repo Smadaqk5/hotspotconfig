@@ -26,6 +26,8 @@ else:
 # Encryption key for sensitive data (M-PESA credentials)
 ENCRYPTION_KEY = config('ENCRYPTION_KEY', default=None)
 
+# Content Security Policy is handled by CSPMiddleware
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -55,6 +57,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'hotspot_config.middleware.CSPMiddleware',  # Add CSP middleware
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -62,6 +65,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Content Security Policy is handled by CSPMiddleware
 
 ROOT_URLCONF = 'hotspot_config.urls'
 
