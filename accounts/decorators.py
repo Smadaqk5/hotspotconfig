@@ -5,6 +5,7 @@ from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponseForbidden
+from django.contrib.auth.decorators import user_passes_test
 
 
 def super_admin_required(view_func):

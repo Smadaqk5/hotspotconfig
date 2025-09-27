@@ -133,6 +133,19 @@ class Provider(models.Model):
     bank_account = models.CharField(max_length=100, blank=True, null=True)
     mpesa_number = models.CharField(max_length=15, blank=True, null=True)
     
+    # M-PESA Daraja API Credentials (Encrypted)
+    mpesa_consumer_key = models.TextField(blank=True, null=True, help_text="M-PESA Daraja API Consumer Key (encrypted)")
+    mpesa_consumer_secret = models.TextField(blank=True, null=True, help_text="M-PESA Daraja API Consumer Secret (encrypted)")
+    mpesa_shortcode = models.CharField(max_length=20, blank=True, null=True, help_text="M-PESA Paybill/Till Number")
+    mpesa_passkey = models.TextField(blank=True, null=True, help_text="M-PESA Daraja API Passkey (encrypted)")
+    mpesa_environment = models.CharField(max_length=10, choices=[('sandbox', 'Sandbox'), ('production', 'Production')], default='sandbox')
+    callback_url = models.URLField(blank=True, null=True, help_text="Auto-generated callback URL for this provider")
+    
+    # M-PESA Settings
+    mpesa_credentials_verified = models.BooleanField(default=False)
+    mpesa_last_test = models.DateTimeField(blank=True, null=True)
+    mpesa_test_status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('success', 'Success'), ('failed', 'Failed')], blank=True, null=True)
+    
     # Subscription and billing
     subscription_status = models.CharField(max_length=20, default='inactive')
     subscription_start_date = models.DateTimeField(blank=True, null=True)
