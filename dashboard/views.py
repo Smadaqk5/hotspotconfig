@@ -2,6 +2,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.utils import timezone
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from subscriptions.models import Subscription, SubscriptionUsage
 from payments.models import Payment
 from config_generator.models import GeneratedConfig
@@ -115,3 +117,12 @@ def subscription_status(request):
             'has_subscription': False,
             'message': 'No active subscription found'
         })
+
+
+@login_required
+def dashboard_view(request):
+    """Main dashboard view"""
+    return render(request, 'dashboard.html', {
+        'user': request.user,
+        'page_title': 'Dashboard'
+    })

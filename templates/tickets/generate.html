@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate Tickets - Hotspot Config{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-semibold text-gray-900">Generate Tickets</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                    <a href="/dashboard/tickets/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Tickets</a>
+                    <a href="/dashboard/reports/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
+                    <a href="/dashboard/profile/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
+                    <span class="text-sm text-gray-700">Welcome, {{ user.first_name|default:user.username }}</span>
+                    <a href="/logout/" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate Tickets</h2>
+                
+                <form method="post" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="ticket_name" class="block text-sm font-medium text-gray-700 mb-2">Ticket Name</label>
+                            <input type="text" name="ticket_name" id="ticket_name" required
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="ticket_type" class="block text-sm font-medium text-gray-700 mb-2">Ticket Type</label>
+                            <select name="ticket_type" id="ticket_type" required
+                                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Select Type</option>
+                                <option value="time">Time-based</option>
+                                <option value="data">Data-based</option>
+                            </select>
+                        </div>
+                        
+                        <div id="duration-field" class="hidden">
+                            <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">Duration (seconds)</label>
+                            <input type="number" name="duration" id="duration"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div id="data-limit-field" class="hidden">
+                            <label for="data_limit" class="block text-sm font-medium text-gray-700 mb-2">Data Limit (MB)</label>
+                            <input type="number" name="data_limit" id="data_limit"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700 mb-2">Price (KES)</label>
+                            <input type="number" name="price" id="price" required
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label for="quantity" class="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+                            <input type="number" name="quantity" id="quantity" required min="1"
+                                   class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea name="description" id="description" rows="3"
+                                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <a href="/dashboard/tickets/" class="bg-gray-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-gray-700">
+                            Cancel
+                        </a>
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                            Generate Tickets
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('ticket_type').addEventListener('change', function() {
+    const durationField = document.getElementById('duration-field');
+    const dataLimitField = document.getElementById('data-limit-field');
+    
+    if (this.value === 'time') {
+        durationField.classList.remove('hidden');
+        dataLimitField.classList.add('hidden');
+    } else if (this.value === 'data') {
+        durationField.classList.add('hidden');
+        dataLimitField.classList.remove('hidden');
+    } else {
+        durationField.classList.add('hidden');
+        dataLimitField.classList.add('hidden');
+    }
+});
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard - Hotspot Config{% endblock %}
+{% block title %}Reports - Hotspot Config{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-50">
@@ -10,12 +10,12 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <h1 class="text-xl font-semibold text-gray-900">Dashboard</h1>
+                    <h1 class="text-xl font-semibold text-gray-900">Reports</h1>
                 </div>
                 <div class="flex items-center space-x-4">
                     <a href="/dashboard/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
                     <a href="/dashboard/tickets/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Tickets</a>
-                    <a href="/dashboard/reports/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
+                    <a href="/dashboard/reports/" class="text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Reports</a>
                     <a href="/dashboard/profile/" class="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">Profile</a>
                     <span class="text-sm text-gray-700">Welcome, {{ user.first_name|default:user.username }}</span>
                     <a href="/logout/" class="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
@@ -28,28 +28,8 @@
 
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Stats Cards -->
+        <!-- Revenue Stats -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white overflow-hidden shadow rounded-lg">
-                <div class="p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0">
-                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Tickets</dt>
-                                <dd class="text-lg font-medium text-gray-900">0</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="bg-white overflow-hidden shadow rounded-lg">
                 <div class="p-5">
                     <div class="flex items-center">
@@ -63,8 +43,28 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Revenue</dt>
-                                <dd class="text-lg font-medium text-gray-900">KES 0</dd>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Sales</dt>
+                                <dd class="text-lg font-medium text-gray-900">KES 15,250</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Today's Sales</dt>
+                                <dd class="text-lg font-medium text-gray-900">KES 1,250</dd>
                             </dl>
                         </div>
                     </div>
@@ -83,8 +83,8 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Active Users</dt>
-                                <dd class="text-lg font-medium text-gray-900">0</dd>
+                                <dt class="text-sm font-medium text-gray-500 truncate">This Week</dt>
+                                <dd class="text-lg font-medium text-gray-900">KES 8,750</dd>
                             </dl>
                         </div>
                     </div>
@@ -103,8 +103,8 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Hotspots</dt>
-                                <dd class="text-lg font-medium text-gray-900">0</dd>
+                                <dt class="text-sm font-medium text-gray-500 truncate">This Month</dt>
+                                <dd class="text-lg font-medium text-gray-900">KES 35,000</dd>
                             </dl>
                         </div>
                     </div>
@@ -112,50 +112,61 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Revenue Chart -->
         <div class="bg-white shadow rounded-lg mb-8">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="/dashboard/tickets/create/" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 text-center">
-                        Create New Ticket Type
-                    </a>
-                    <a href="/dashboard/tickets/generate/" class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700 text-center">
-                        Generate Tickets
-                    </a>
-                    <a href="/dashboard/reports/" class="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700 text-center">
-                        View Reports
-                    </a>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Revenue Chart</h3>
+                <div class="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <canvas id="revenueChart" class="w-full h-full"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Subscription Status -->
+        <!-- Revenue by Type -->
         <div class="bg-white shadow rounded-lg mb-8">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Subscription Status</h3>
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Revenue by Type</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Time-based</p>
+                            <p class="text-2xl font-bold text-gray-900">KES 8,500</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
                             </svg>
                         </div>
                     </div>
-                    <div class="ml-3">
-                        <p class="text-sm font-medium text-gray-900">Active</p>
-                        <p class="text-sm text-gray-500">Professional Plan</p>
+                    <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Data-based</p>
+                            <p class="text-2xl font-bold text-gray-900">KES 6,750</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                            </svg>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Activity -->
+        <!-- Export Options -->
         <div class="bg-white shadow rounded-lg">
             <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>
-                <div class="text-sm text-gray-500">
-                    <p>Welcome to your dashboard! Start by creating your first ticket type or generating tickets for your customers.</p>
+                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Export Reports</h3>
+                <div class="flex space-x-4">
+                    <button class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700">
+                        Export CSV
+                    </button>
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                        Export Excel
+                    </button>
+                    <button class="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-700">
+                        Export PDF
+                    </button>
                 </div>
             </div>
         </div>

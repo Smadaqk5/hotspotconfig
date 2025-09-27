@@ -14,6 +14,8 @@ urlpatterns = [
     path('api/tickets/', include('tickets.urls')),
     path('', include('accounts.urls')),
     path('', include('dashboard.urls')),
+    path('dashboard/tickets/', include('tickets.urls')),
+    path('dashboard/reports/', include('reports.urls')),
     path('', TemplateView.as_view(template_name='index.html'), name='home'),
 ]
 

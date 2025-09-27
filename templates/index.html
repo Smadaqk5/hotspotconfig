@@ -1,25 +1,25 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}MikroTik Hotspot Ticketing System - Monetize Your WiFi Easily{% endblock %}
+{% block title %}MikroTik Hotspot Ticketing System{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="bg-gradient-to-r from-primary to-secondary text-white py-20">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div class="text-center">
             <h1 class="text-4xl md:text-6xl font-bold mb-6">
-                Monetize Your WiFi Easily
-                <span class="block text-yellow-300">With MikroTik Hotspot Tickets</span>
+                Monetize Your WiFi Easily<br>
+                <span class="text-yellow-300">With MikroTik Hotspot Tickets</span>
             </h1>
             <p class="text-xl md:text-2xl mb-8 text-blue-100">
-                Generate, sell, and manage internet tickets/vouchers for your MikroTik hotspot.
-                Track revenue, automate expiry, and grow your business.
+                Generate, sell, and manage internet tickets/vouchers for your MikroTik hotspot with ease
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="#pricing" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition duration-200">
+                <a href="/register/" class="bg-yellow-400 text-blue-900 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition-colors">
                     Start Selling Tickets
                 </a>
-                <a href="#features" class="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary transition duration-200">
+                <a href="#features" class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
                     How It Works
                 </a>
             </div>
@@ -28,309 +28,267 @@
 </section>
 
 <!-- Features Section -->
-<section id="features" class="py-20 bg-white">
+<section id="features" class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                How It Works
-            </h2>
-            <p class="text-xl text-gray-600">
-                Simple steps to start monetizing your WiFi hotspot with tickets
-            </p>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p class="text-xl text-gray-600">Simple steps to start monetizing your WiFi hotspot</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-2xl font-bold">1</span>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl font-bold text-blue-600">1</span>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">Create Ticket Types</h3>
-                <p class="text-gray-600">Set up time-based (1hr, 1day) or data-based (1GB, 5GB) ticket types with custom pricing</p>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Create Ticket Types</h3>
+                <p class="text-gray-600">Set up time-based or data-based ticket plans with custom pricing</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-2xl font-bold">2</span>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl font-bold text-green-600">2</span>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">Generate Tickets</h3>
-                <p class="text-gray-600">Bulk generate tickets with unique usernames and passwords. Print or share digitally</p>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Generate Tickets</h3>
+                <p class="text-gray-600">Create unique username/password combinations for your customers</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-2xl font-bold">3</span>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl font-bold text-purple-600">3</span>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">Sell & Track</h3>
-                <p class="text-gray-600">Sell tickets to customers and track sales, revenue, and usage in real-time</p>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Sell & Track</h3>
+                <p class="text-gray-600">Monitor sales, revenue, and track ticket usage in real-time</p>
             </div>
             
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="text-2xl font-bold">4</span>
+            <div class="text-center">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="text-2xl font-bold text-yellow-600">4</span>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">Auto-Expiry</h3>
-                <p class="text-gray-600">Tickets automatically expire when time/data is consumed. No manual management needed</p>
-            </div>
-        </div>
-        
-        <!-- Additional Features -->
-        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-chart-line text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Revenue Tracking</h3>
-                <p class="text-gray-600">Monitor daily, weekly, and monthly sales with detailed analytics and reports</p>
-            </div>
-            
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-print text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Print Tickets</h3>
-                <p class="text-gray-600">Export tickets as PDF for printing. Support for thermal and regular printers</p>
-            </div>
-            
-            <div class="text-center p-6">
-                <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-mobile-alt text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">Mobile Dashboard</h3>
-                <p class="text-gray-600">Manage your hotspot business from anywhere with our mobile-friendly dashboard</p>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Auto-Expiry</h3>
+                <p class="text-gray-600">Tickets automatically expire after the set time or data limit</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Pricing Section -->
-<section id="pricing" class="py-20 bg-gray-50">
+<section id="pricing" class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Simple, Transparent Pricing
-            </h2>
-            <p class="text-xl text-gray-600">
-                Choose the plan that fits your business. All plans include unlimited ticket generation and sales tracking.
-            </p>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+            <p class="text-xl text-gray-600">Choose the plan that fits your business needs</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <!-- Basic Plan -->
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <div class="text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Basic</h3>
-                    <div class="text-4xl font-bold text-primary mb-4">
-                        KES 2,500
-                        <span class="text-lg text-gray-500">/month</span>
-                    </div>
-                    <p class="text-gray-600 mb-6">Perfect for small hotspot providers</p>
-                </div>
+            <div class="bg-white border-2 border-gray-200 rounded-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Basic</h3>
+                <div class="text-4xl font-bold text-gray-900 mb-2">KES 2,500</div>
+                <div class="text-gray-600 mb-6">per month</div>
                 <ul class="space-y-3 mb-8">
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Unlimited ticket generation</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Unlimited ticket generation
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Time & data-based tickets</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Time & data-based tickets
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Basic sales tracking</span>
-                    </li>
-                    <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Email support</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Basic sales tracking
                     </li>
                 </ul>
-                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
+                <a href="/register/" class="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center">
                     Get Started
-                </button>
+                </a>
             </div>
             
             <!-- Professional Plan -->
-            <div class="bg-white rounded-lg shadow-lg p-8 border-2 border-primary relative">
+            <div class="bg-white border-2 border-blue-500 rounded-lg p-8 relative">
                 <div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <span class="bg-primary text-white px-4 py-2 rounded-full text-sm font-semibold">Most Popular</span>
+                    <span class="bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-semibold">Most Popular</span>
                 </div>
-                <div class="text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Professional</h3>
-                    <div class="text-4xl font-bold text-primary mb-4">
-                        KES 5,000
-                        <span class="text-lg text-gray-500">/month</span>
-                    </div>
-                    <p class="text-gray-600 mb-6">Ideal for growing ISPs</p>
-                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Professional</h3>
+                <div class="text-4xl font-bold text-gray-900 mb-2">KES 5,000</div>
+                <div class="text-gray-600 mb-6">per month</div>
                 <ul class="space-y-3 mb-8">
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Everything in Basic</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Everything in Basic
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Advanced analytics</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Advanced analytics
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>PDF ticket printing</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        PDF ticket printing
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Priority support</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Priority support
                     </li>
                 </ul>
-                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
+                <a href="/register/" class="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center">
                     Get Started
-                </button>
+                </a>
             </div>
             
             <!-- Enterprise Plan -->
-            <div class="bg-white rounded-lg shadow-lg p-8">
-                <div class="text-center">
-                    <h3 class="text-2xl font-bold text-gray-900 mb-2">Enterprise</h3>
-                    <div class="text-4xl font-bold text-primary mb-4">
-                        KES 10,000
-                        <span class="text-lg text-gray-500">/month</span>
-                    </div>
-                    <p class="text-gray-600 mb-6">For large ISPs and enterprises</p>
-                </div>
+            <div class="bg-white border-2 border-gray-200 rounded-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Enterprise</h3>
+                <div class="text-4xl font-bold text-gray-900 mb-2">KES 10,000</div>
+                <div class="text-gray-600 mb-6">per month</div>
                 <ul class="space-y-3 mb-8">
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Everything in Professional</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Everything in Professional
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>Custom branding</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        Custom integrations
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>24/7 phone support</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        White-label solution
                     </li>
                     <li class="flex items-center">
-                        <i class="fas fa-check text-green-500 mr-3"></i>
-                        <span>API access</span>
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                        24/7 dedicated support
                     </li>
                 </ul>
-                <button class="w-full bg-primary text-white py-3 rounded-lg font-semibold hover:bg-secondary transition duration-200">
-                    Contact Sales
-                </button>
+                <a href="/register/" class="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors text-center">
+                    Get Started
+                </a>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Testimonials Section -->
-<section class="py-20 bg-white">
+<section class="py-20 bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                What Our Customers Say
-            </h2>
-            <p class="text-xl text-gray-600">
-                Join hundreds of hotspot operators who are already monetizing their WiFi with our ticketing system
-            </p>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">What Our Customers Say</h2>
+            <p class="text-xl text-gray-600">Join hundreds of satisfied customers</p>
         </div>
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-gray-50 p-6 rounded-lg">
+            <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                        J
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-blue-600 font-semibold">JM</span>
                     </div>
                     <div class="ml-4">
-                        <h4 class="font-semibold">John Mwangi</h4>
-                        <p class="text-gray-600">ISP Owner, Nairobi</p>
+                        <h4 class="font-semibold text-gray-900">John Mwangi</h4>
+                        <p class="text-gray-600 text-sm">Cyber Cafe Owner</p>
                     </div>
                 </div>
-                <p class="text-gray-700">"This ticketing system has transformed my hotspot business. I can now generate and sell tickets easily, and track my revenue in real-time. My income has doubled!"</p>
+                <p class="text-gray-700">"This system has transformed my business. I can now easily manage my customers and track revenue."</p>
             </div>
             
-            <div class="bg-gray-50 p-6 rounded-lg">
+            <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                        S
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-green-600 font-semibold">SW</span>
                     </div>
                     <div class="ml-4">
-                        <h4 class="font-semibold">Sarah Wanjiku</h4>
-                        <p class="text-gray-600">Hotspot Provider, Mombasa</p>
+                        <h4 class="font-semibold text-gray-900">Sarah Wanjiku</h4>
+                        <p class="text-gray-600 text-sm">Hotel Manager</p>
                     </div>
                 </div>
-                <p class="text-gray-700">"The ticket generation and printing features are amazing. I can create batches of tickets in seconds and print them for my customers. The auto-expiry feature saves me so much time!"</p>
+                <p class="text-gray-700">"The automated ticket generation saves me hours every day. Highly recommended!"</p>
             </div>
             
-            <div class="bg-gray-50 p-6 rounded-lg">
+            <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center mb-4">
-                    <div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center text-white font-bold">
-                        P
+                    <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-purple-600 font-semibold">PK</span>
                     </div>
                     <div class="ml-4">
-                        <h4 class="font-semibold">Peter Kimani</h4>
-                        <p class="text-gray-600">Network Engineer, Kisumu</p>
+                        <h4 class="font-semibold text-gray-900">Peter Kimani</h4>
+                        <p class="text-gray-600 text-sm">ISP Owner</p>
                     </div>
                 </div>
-                <p class="text-gray-700">"The revenue tracking and analytics are incredible. I can see exactly how much I'm making from each ticket type and optimize my pricing. The mobile dashboard is perfect for managing on the go."</p>
+                <p class="text-gray-700">"Perfect solution for managing multiple hotspots. The reporting features are excellent."</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- FAQ Section -->
-<section class="py-20 bg-gray-50">
+<section class="py-20 bg-white">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                Frequently Asked Questions
-            </h2>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <p class="text-xl text-gray-600">Everything you need to know about our service</p>
         </div>
         
         <div class="space-y-6">
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-2">What types of tickets can I create?</h3>
-                <p class="text-gray-600">You can create time-based tickets (1 hour, 1 day, 1 week) and data-based tickets (1GB, 5GB, 10GB). You can also set custom pricing for each ticket type.</p>
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What types of tickets can I create?</h3>
+                <p class="text-gray-700">You can create both time-based tickets (1 hour, 1 day, etc.) and data-based tickets (1GB, 5GB, etc.) with custom pricing.</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-2">How do tickets automatically expire?</h3>
-                <p class="text-gray-600">Time-based tickets expire after the specified duration. Data-based tickets expire when the data limit is reached. The system automatically disables expired tickets in your MikroTik router.</p>
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">How do tickets automatically expire?</h3>
+                <p class="text-gray-700">Tickets automatically expire after the specified time duration or when the data limit is reached, ensuring fair usage.</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-2">Can I print tickets for my customers?</h3>
-                <p class="text-gray-600">Yes! You can export tickets as PDF files for printing. We support both regular and thermal printers. You can also share tickets digitally via email or SMS.</p>
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Can I print tickets for my customers?</h3>
+                <p class="text-gray-700">Yes! You can print tickets in various formats including standard A4 and thermal printer formats.</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-2">How do I track my revenue?</h3>
-                <p class="text-gray-600">Our dashboard shows real-time sales data, revenue tracking, and analytics. You can see daily, weekly, and monthly reports, plus detailed breakdowns by ticket type.</p>
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Is there a mobile app?</h3>
+                <p class="text-gray-700">Our web application is fully responsive and works perfectly on mobile devices. No separate app needed!</p>
             </div>
             
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <h3 class="text-lg font-semibold mb-2">Is there a free trial?</h3>
-                <p class="text-gray-600">We offer a 7-day free trial for all new users. No credit card required. You can generate up to 100 tickets during the trial period.</p>
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
+                <p class="text-gray-700">We accept M-PESA, Airtel Money, and other mobile money services through Pesapal integration.</p>
             </div>
         </div>
     </div>
 </section>
 
 <!-- CTA Section -->
-<section class="py-20 bg-primary text-white">
+<section class="py-20 bg-blue-600">
     <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            Ready to Start Selling Tickets?
-        </h2>
-        <p class="text-xl mb-8 text-blue-100">
-            Join hundreds of hotspot operators who are already monetizing their WiFi with our ticketing system. Start generating revenue today!
-        </p>
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">Ready to Start Monetizing Your WiFi?</h2>
+        <p class="text-xl text-blue-100 mb-8">Join hundreds of businesses already using our platform</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/register" class="bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition duration-200">
-                Start Free Trial
+            <a href="/register/" class="bg-yellow-400 text-blue-900 px-8 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-300 transition-colors">
+                Get Started Free
             </a>
-            <a href="#contact" class="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white hover:text-primary transition duration-200">
+            <a href="#contact" class="border-2 border-white text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors">
                 Contact Sales
             </a>
         </div>
     </div>
 </section>
 {% endblock %}
-
