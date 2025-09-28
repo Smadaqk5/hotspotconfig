@@ -24,7 +24,7 @@ class User(AbstractUser):
     )
     company_name = models.CharField(max_length=100, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
-    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='end_user')
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES, default='provider')
     
     # Provider-specific fields
     provider_license = models.CharField(max_length=100, blank=True, null=True)

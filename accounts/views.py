@@ -38,7 +38,7 @@ class RegistrationFormView(TemplateView):
         password_confirm = request.POST.get('password_confirm')
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
-        user_type = request.POST.get('user_type', 'end_user')
+        user_type = request.POST.get('user_type', 'provider')
         
         if password != password_confirm:
             messages.error(request, 'Passwords do not match.')
