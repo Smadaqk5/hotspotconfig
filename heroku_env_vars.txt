@@ -1,0 +1,38 @@
+# Heroku Environment Variables for MikroTik Hotspot Platform
+# Copy these to your Heroku app settings
+
+# Django Settings
+SECRET_KEY=stIxCFY89xrhHr3T5lguRB1W1SnSTCy0zDxHXC1gr0o2nI95znL6PrDJywTmuRblpSU
+DEBUG=False
+ALLOWED_HOSTS=hotspott-39e105144510.herokuapp.com
+
+# Database (Supabase PostgreSQL)
+DATABASE_URL=postgresql://postgres.vbrkdpjaplqrngarnhyu:C7kCNrGZa$E8S7W@aws-1-eu-north-1.pooler.supabase.com:6543/postgres
+SUPABASE_URL=https://vbrkdpjaplqrngarnhyu.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZicmtkcGphcGxxcm5nYXJuaHl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NTM1NjUsImV4cCI6MjA3NDUyOTU2NX0.6GD8quMGFMl6TCgTnFj8UijcBgXQpaO8cISUfiW61Iw
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZicmtkcGphcGxxcm5nYXJnaHl1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1ODk1MzU2NSwiZXhwIjoyMDc0NTI5NTY1fQ.EcuFAtDtYoafFznel4ZSuIeP3BYC6HyT3z_sCEnrHRg
+
+# Encryption Key (IMPORTANT: Generate a new one for production)
+ENCRYPTION_KEY=your-fernet-encryption-key-here
+
+# Pesapal API (Platform Revenue)
+PESAPAL_CONSUMER_KEY=c7tKYh47BTA3kqExs7OOI8ghj2emni62
+PESAPAL_CONSUMER_SECRET=jQcz5iYPZW121PW2kUU+o3piBO4=
+PESAPAL_BASE_URL=https://cybqa.pesapal.com/pesapalv3/api/
+PESAPAL_CALLBACK_URL=https://hotspott-39e105144510.herokuapp.com/api/payments/pesapal/callback/
+PESAPAL_IPN_URL=https://hotspott-39e105144510.herokuapp.com/api/payments/pesapal/ipn/
+
+# Email Settings
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=mainaadam277@gmail.com
+EMAIL_HOST_PASSWORD=cwch eysq lofx tubi
+DEFAULT_FROM_EMAIL=mainaadam277@gmail.com
+
+# Frontend URL
+FRONTEND_URL=https://hotspott-39e105144510.herokuapp.com/
+
+# Additional Required Variables
+DJANGO_SETTINGS_MODULE=hotspot_config.settings
+PYTHONPATH=/app
