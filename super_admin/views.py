@@ -183,58 +183,96 @@ def system_settings(request):
 @user_passes_test(is_super_admin)
 def approve_providers(request):
     """Bulk approve providers"""
-    return render(request, 'super_admin/approve_providers.html', {'page_title': 'Approve Providers'})
+    pending_providers = Provider.objects.filter(status='pending')
+    context = {
+        'page_title': 'Approve Providers',
+        'pending_providers': pending_providers,
+    }
+    return render(request, 'super_admin/approve_providers.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def create_provider(request):
     """Create new provider"""
-    return render(request, 'super_admin/create_provider.html', {'page_title': 'Create Provider'})
+    context = {
+        'page_title': 'Create Provider',
+    }
+    return render(request, 'super_admin/create_provider.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def revenue_reports(request):
     """Revenue reports"""
-    return render(request, 'super_admin/revenue_reports.html', {'page_title': 'Revenue Reports'})
+    total_revenue = TicketSale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    context = {
+        'page_title': 'Revenue Reports',
+        'total_revenue': total_revenue,
+    }
+    return render(request, 'super_admin/revenue_reports.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def user_analytics(request):
     """User analytics"""
-    return render(request, 'super_admin/user_analytics.html', {'page_title': 'User Analytics'})
+    total_users = User.objects.count()
+    context = {
+        'page_title': 'User Analytics',
+        'total_users': total_users,
+    }
+    return render(request, 'super_admin/user_analytics.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def provider_analytics(request):
     """Provider analytics"""
-    return render(request, 'super_admin/provider_analytics.html', {'page_title': 'Provider Analytics'})
+    total_providers = Provider.objects.count()
+    context = {
+        'page_title': 'Provider Analytics',
+        'total_providers': total_providers,
+    }
+    return render(request, 'super_admin/provider_analytics.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def payment_monitoring(request):
     """Payment monitoring"""
-    return render(request, 'super_admin/payment_monitoring.html', {'page_title': 'Payment Monitoring'})
+    context = {
+        'page_title': 'Payment Monitoring',
+    }
+    return render(request, 'super_admin/payment_monitoring.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def platform_logs(request):
     """Platform logs"""
-    return render(request, 'super_admin/platform_logs.html', {'page_title': 'Platform Logs'})
+    context = {
+        'page_title': 'Platform Logs',
+    }
+    return render(request, 'super_admin/platform_logs.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def system_health(request):
     """System health"""
-    return render(request, 'super_admin/system_health.html', {'page_title': 'System Health'})
+    context = {
+        'page_title': 'System Health',
+    }
+    return render(request, 'super_admin/system_health.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def bulk_approve(request):
     """Bulk approve providers"""
-    return render(request, 'super_admin/bulk_approve.html', {'page_title': 'Bulk Approve'})
+    context = {
+        'page_title': 'Bulk Approve',
+    }
+    return render(request, 'super_admin/bulk_approve.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def export_data(request):
     """Export data"""
-    return render(request, 'super_admin/export_data.html', {'page_title': 'Export Data'})
+    context = {
+        'page_title': 'Export Data',
+    }
+    return render(request, 'super_admin/export_data.html', context)
