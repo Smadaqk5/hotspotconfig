@@ -11,7 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import User, Provider, EndUser
-from tickets.models import Ticket, TicketSale, TicketType, TicketBatch
+from tickets.models import Ticket, TicketSale, TicketType
 from subscriptions.models import ProviderSubscription, ProviderSubscriptionPlan
 from payments.models import Payment
 from config_generator.models import GeneratedConfig

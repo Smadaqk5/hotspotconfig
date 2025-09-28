@@ -1,38 +1,81 @@
 from django.db import models
-from django.contrib.auth import get_user_model
 from django.utils import timezone
-from datetime import timedelta
+from django.core.validators import MinValueValidator, MaxValueValidator
 import uuid
 import secrets
 import string
 
-User = get_user_model()
-
-
 class TicketType(models.Model):
-    """Ticket types (time-based or data-based)"""
+    """Ticket type definitions for providers"""
     TYPE_CHOICES = [
         ('time', 'Time-based'),
         ('data', 'Data-based'),
     ]
     
-    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='ticket_types', null=True, blank=True)
-    name = models.CharField(max_length=100, default='Default Ticket')
-    ticket_type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='time')
-    value = models.IntegerField(help_text="Time in hours or data in GB", default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    description = models.TextField(blank=True, null=True)
+    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='ticket_types')
+    name = models.CharField(max_length=100, help_text="e.g., '1 Hour WiFi', '24 Hours WiFi'")
+    type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='time')
+    
+    # Time-based tickets
+    duration_hours = models.IntegerField(blank=True, null=True, help_text="Duration in hours for time-based tickets")
+    
+    # Data-based tickets  
+    data_limit_mb = models.IntegerField(blank=True, null=True, help_text="Data limit in MB for data-based tickets")
+    
+    # Pricing
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.01)])
+    currency = models.CharField(max_length=3, default='KES')
+    
+    # Bandwidth limits
+    download_speed_mbps = models.IntegerField(default=5, help_text="Download speed limit in Mbps")
+    upload_speed_mbps = models.IntegerField(default=2, help_text="Upload speed limit in Mbps")
+    
+    # Status
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False, help_text="Show prominently in captive portal")
+    
+    # Metadata
+    description = models.TextField(blank=True, help_text="Description shown to customers")
+    icon = models.CharField(max_length=50, default='fas fa-wifi', help_text="Font Awesome icon class")
+    color = models.CharField(max_length=7, default='#3B82F6', help_text="Hex color for UI")
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
+        ordering = ['price']
         unique_together = ['provider', 'name']
-        ordering = ['name']
     
     def __str__(self):
-        return f"{self.name} - {self.provider.business_name}"
-
+        return f"{self.provider.business_name} - {self.name}"
+    
+    def get_display_name(self):
+        """Get display name for captive portal"""
+        if self.type == 'time':
+            return f"{self.duration_hours}h WiFi - Ksh {self.price}"
+        else:
+            return f"{self.data_limit_mb}MB WiFi - Ksh {self.price}"
+    
+    def get_duration_display(self):
+        """Get human-readable duration"""
+        if self.type == 'time':
+            if self.duration_hours == 1:
+                return "1 Hour"
+            elif self.duration_hours < 24:
+                return f"{self.duration_hours} Hours"
+            else:
+                days = self.duration_hours // 24
+                hours = self.duration_hours % 24
+                if hours == 0:
+                    return f"{days} Day{'s' if days > 1 else ''}"
+                else:
+                    return f"{days} Day{'s' if days > 1 else ''} {hours}h"
+        else:
+            if self.data_limit_mb < 1024:
+                return f"{self.data_limit_mb} MB"
+            else:
+                gb = self.data_limit_mb / 1024
+                return f"{gb:.1f} GB"
 
 class Ticket(models.Model):
     """Individual tickets/vouchers"""
@@ -44,39 +87,42 @@ class Ticket(models.Model):
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='tickets', null=True, blank=True)
+    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='tickets')
     ticket_type = models.ForeignKey(TicketType, on_delete=models.CASCADE, related_name='tickets')
-    code = models.CharField(max_length=20, unique=True, default='TEMP')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     
     # Ticket details
-    username = models.CharField(max_length=100, blank=True, null=True)
-    password = models.CharField(max_length=100, blank=True, null=True)
+    code = models.CharField(max_length=20, unique=True, help_text="Unique ticket code")
+    username = models.CharField(max_length=50, help_text="Username for hotspot login")
+    password = models.CharField(max_length=50, help_text="Password for hotspot login")
     
-    # Usage tracking
-    time_used = models.IntegerField(default=0, help_text="Time used in minutes")
-    data_used = models.IntegerField(default=0, help_text="Data used in MB")
-    max_time = models.IntegerField(help_text="Maximum time in minutes", default=0)
-    max_data = models.IntegerField(help_text="Maximum data in MB", default=0)
-    
-    # Expiry
-    expires_at = models.DateTimeField(default=timezone.now)
+    # Status and timing
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
     used_at = models.DateTimeField(blank=True, null=True)
     
-    # Financial
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    currency = models.CharField(max_length=3, default='KES')
+    # Usage tracking
+    device_mac = models.CharField(max_length=17, blank=True, help_text="MAC address of connected device")
+    device_ip = models.GenericIPAddressField(blank=True, null=True, help_text="IP address of connected device")
+    session_start = models.DateTimeField(blank=True, null=True)
+    session_end = models.DateTimeField(blank=True, null=True)
     
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    # Data usage (for data-based tickets)
+    data_used_mb = models.IntegerField(default=0, help_text="Data used in MB")
+    
+    # Payment reference
+    payment = models.ForeignKey('payments.Payment', on_delete=models.SET_NULL, blank=True, null=True, related_name='tickets')
     
     class Meta:
         ordering = ['-created_at']
         indexes = [
             models.Index(fields=['code']),
-            models.Index(fields=['provider', 'status']),
+            models.Index(fields=['status']),
             models.Index(fields=['expires_at']),
         ]
+    
+    def __str__(self):
+        return f"Ticket {self.code} - {self.ticket_type.name}"
     
     def save(self, *args, **kwargs):
         if not self.code:
@@ -97,8 +143,8 @@ class Ticket(models.Model):
     def generate_username(self):
         """Generate unique username"""
         while True:
-            username = f"user{secrets.randbelow(9999):04d}"
-            if not Ticket.objects.filter(username=username, provider=self.provider).exists():
+            username = f"user{secrets.randbelow(999999):06d}"
+            if not Ticket.objects.filter(username=username).exists():
                 return username
     
     def generate_password(self):
@@ -107,108 +153,113 @@ class Ticket(models.Model):
     
     def is_expired(self):
         """Check if ticket is expired"""
-        return timezone.now() > self.expires_at or self.status == 'expired'
+        return timezone.now() > self.expires_at
     
     def is_used(self):
         """Check if ticket is used"""
-        return self.status == 'used' or self.used_at is not None
+        return self.status == 'used'
     
-    def can_use(self):
+    def can_be_used(self):
         """Check if ticket can be used"""
-        return (
-            self.status == 'active' and 
-            not self.is_expired() and 
-            not self.is_used()
-        )
+        return self.status == 'active' and not self.is_expired()
     
     def get_remaining_time(self):
-        """Get remaining time in minutes"""
-        if self.ticket_type.ticket_type == 'time':
-            return max(0, self.max_time - self.time_used)
-        return 0
+        """Get remaining time in hours"""
+        if self.ticket_type.type == 'time':
+            if self.is_expired():
+                return 0
+            remaining = self.expires_at - timezone.now()
+            return max(0, remaining.total_seconds() / 3600)
+        return None
     
     def get_remaining_data(self):
         """Get remaining data in MB"""
-        if self.ticket_type.ticket_type == 'data':
-            return max(0, self.max_data - self.data_used)
-        return 0
+        if self.ticket_type.type == 'data':
+            return max(0, self.ticket_type.data_limit_mb - self.data_used_mb)
+        return None
     
-    def __str__(self):
-        return f"{self.code} - {self.ticket_type.name}"
-
+    def activate(self, device_mac=None, device_ip=None):
+        """Activate ticket for use"""
+        if not self.can_be_used():
+            return False
+        
+        self.status = 'used'
+        self.used_at = timezone.now()
+        self.session_start = timezone.now()
+        if device_mac:
+            self.device_mac = device_mac
+        if device_ip:
+            self.device_ip = device_ip
+        self.save()
+        return True
+    
+    def deactivate(self):
+        """Deactivate ticket"""
+        self.session_end = timezone.now()
+        self.save()
+    
+    def update_data_usage(self, mb_used):
+        """Update data usage for data-based tickets"""
+        if self.ticket_type.type == 'data':
+            self.data_used_mb += mb_used
+            if self.data_used_mb >= self.ticket_type.data_limit_mb:
+                self.status = 'expired'
+            self.save()
 
 class TicketSale(models.Model):
-    """Ticket sales records"""
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('cancelled', 'Cancelled'),
-        ('refunded', 'Refunded'),
-    ]
-    
+    """Sales records for tickets"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='ticket_sales', null=True, blank=True)
-    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='sales', null=True, blank=True)
-    customer_name = models.CharField(max_length=200, blank=True, null=True)
-    customer_phone = models.CharField(max_length=15, blank=True, null=True)
-    customer_email = models.EmailField(blank=True, null=True)
+    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='ticket_sales')
+    ticket_type = models.ForeignKey(TicketType, on_delete=models.CASCADE, related_name='sales')
+    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='sale')
     
     # Sale details
     quantity = models.IntegerField(default=1)
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=3, default='KES')
     
-    # Payment
-    payment_method = models.CharField(max_length=50, default='cash')
-    payment_reference = models.CharField(max_length=100, blank=True, null=True)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='completed')
+    # Payment details
+    payment_method = models.CharField(max_length=50, default='mpesa')
+    payment_reference = models.CharField(max_length=100, blank=True)
     
-    # Timestamps
-    sold_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    class Meta:
-        ordering = ['-sold_at']
-    
-    def __str__(self):
-        return f"Sale {self.id} - {self.ticket.code}"
-
-
-class TicketBatch(models.Model):
-    """Batch of tickets generated together"""
-    provider = models.ForeignKey('accounts.Provider', on_delete=models.CASCADE, related_name='ticket_batches', null=True, blank=True)
-    ticket_type = models.ForeignKey(TicketType, on_delete=models.CASCADE, related_name='batches', null=True, blank=True)
-    batch_name = models.CharField(max_length=100, default='Batch')
-    quantity = models.IntegerField()
-    generated_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='generated_batches', null=True, blank=True)
-    
-    # Batch details
-    start_code = models.CharField(max_length=20, blank=True, null=True)
-    end_code = models.CharField(max_length=20, blank=True, null=True)
-    expiry_days = models.IntegerField(default=30)
-    
+    # Status
+    status = models.CharField(max_length=20, default='completed')
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.batch_name} - {self.quantity} tickets"
-
+        return f"Sale {self.id} - {self.ticket_type.name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.total_amount:
+            self.total_amount = self.unit_price * self.quantity
+        super().save(*args, **kwargs)
 
 class TicketUsage(models.Model):
-    """Track ticket usage for analytics"""
-    ticket = models.OneToOneField(Ticket, on_delete=models.CASCADE, related_name='usage')
-    session_start = models.DateTimeField(blank=True, null=True)
+    """Track ticket usage sessions"""
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='usage_sessions')
+    session_start = models.DateTimeField()
     session_end = models.DateTimeField(blank=True, null=True)
-    total_session_time = models.IntegerField(default=0, help_text="Total session time in minutes")
-    total_data_consumed = models.IntegerField(default=0, help_text="Total data consumed in MB")
-    device_info = models.JSONField(default=dict, blank=True)
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    device_mac = models.CharField(max_length=17)
+    device_ip = models.GenericIPAddressField()
+    data_used_mb = models.IntegerField(default=0)
     
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-session_start']
     
     def __str__(self):
-        return f"Usage - {self.ticket.code}"
+        return f"Usage {self.ticket.code} - {self.session_start}"
+    
+    def get_duration(self):
+        """Get session duration in minutes"""
+        if self.session_end:
+            duration = self.session_end - self.session_start
+            return duration.total_seconds() / 60
+        else:
+            duration = timezone.now() - self.session_start
+            return duration.total_seconds() / 60

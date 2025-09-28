@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscription Plans{% endblock %}
+
+{% block extra_css %}
+<style>
+    .plan-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .plan-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    .plan-card.featured {
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .price-display {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Choose Your Subscription Plan</h1>
+            <p class="mt-2 text-gray-600">Select the plan that best fits your business needs</p>
+        </div>
+
+        <!-- Current Subscription Alert -->
+        {% if current_subscription %}
+        <div class="mb-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div class="flex items-center">
+                <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+                <div>
+                    <h3 class="text-lg font-medium text-blue-900">Current Subscription</h3>
+                    <p class="text-blue-700">
+                        You have an active subscription: <strong>{{ current_subscription.plan.name }}</strong>
+                        {% if current_subscription.status == 'active' %}
+                            (Expires: {{ current_subscription.expires_at|date:"M d, Y" }})
+                        {% else %}
+                            (Status: {{ current_subscription.get_status_display }})
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Subscription Plans -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for plan in plans %}
+            <div class="plan-card bg-white rounded-2xl shadow-lg p-8 {% if plan.is_featured %}featured border-2{% else %}border border-gray-200{% endif %}">
+                <!-- Plan Header -->
+                <div class="text-center mb-6">
+                    {% if plan.is_featured %}
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mb-4">
+                        <i class="fas fa-star mr-1"></i>
+                        Most Popular
+                    </div>
+                    {% endif %}
+                    
+                    <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ plan.name }}</h3>
+                    <p class="text-gray-600">{{ plan.description }}</p>
+                </div>
+
+                <!-- Price -->
+                <div class="text-center mb-6">
+                    <div class="price-display text-blue-600">
+                        Ksh {{ plan.price|floatformat:0 }}
+                    </div>
+                    <p class="text-gray-500">per {{ plan.billing_cycle }}</p>
+                </div>
+
+                <!-- Features -->
+                <div class="mb-8">
+                    <h4 class="font-semibold text-gray-900 mb-4">What's included:</h4>
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">{{ plan.max_tickets }} tickets per month</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">{{ plan.max_users }} concurrent users</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">{{ plan.storage_gb }}GB storage</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">24/7 support</span>
+                        </li>
+                        {% if plan.advanced_analytics %}
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">Advanced analytics</span>
+                        </li>
+                        {% endif %}
+                        {% if plan.api_access %}
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700">API access</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Action Button -->
+                <div class="text-center">
+                    {% if current_subscription and current_subscription.plan.id == plan.id %}
+                        {% if current_subscription.status == 'active' %}
+                            <button class="w-full bg-gray-400 text-white py-3 px-6 rounded-lg font-semibold cursor-not-allowed">
+                                <i class="fas fa-check mr-2"></i>
+                                Current Plan
+                            </button>
+                        {% else %}
+                            <button class="w-full bg-yellow-500 text-white py-3 px-6 rounded-lg font-semibold cursor-not-allowed">
+                                <i class="fas fa-clock mr-2"></i>
+                                Pending
+                            </button>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'subscriptions:subscribe' plan.id %}" 
+                           class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors inline-block">
+                            <i class="fas fa-credit-card mr-2"></i>
+                            Subscribe Now
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-exclamation-triangle text-4xl text-gray-400 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">No Plans Available</h3>
+                <p class="text-gray-600">Please contact support for subscription options.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mt-16 bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 text-center">Frequently Asked Questions</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-2">How does billing work?</h3>
+                    <p class="text-gray-600">You'll be charged automatically at the beginning of each billing cycle. You can cancel anytime.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Can I change plans?</h3>
+                    <p class="text-gray-600">Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-2">What payment methods do you accept?</h3>
+                    <p class="text-gray-600">We accept M-PESA, Airtel Money, and all major credit cards through Pesapal.</p>
+                </div>
+                
+                <div>
+                    <h3 class="font-semibold text-gray-900 mb-2">Is there a free trial?</h3>
+                    <p class="text-gray-600">Yes, we offer a 7-day free trial for new providers to test our platform.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Section -->
+        <div class="mt-8 text-center">
+            <p class="text-gray-600 mb-4">Need help choosing a plan?</p>
+            <a href="mailto:support@hotspotplatform.com" 
+               class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                <i class="fas fa-envelope mr-2"></i>
+                Contact Support
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

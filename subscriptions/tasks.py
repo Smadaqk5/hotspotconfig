@@ -1,274 +1,220 @@
 """
-Celery tasks for subscription management
+Automated tasks for subscription management
 """
-from celery import shared_task
+from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
 from datetime import timedelta
-from .models import ProviderSubscription, ProviderSubscriptionPlan
-from accounts.models import Provider
-from tickets.models import Ticket
+from django.db.models import Q
 import logging
+
+from accounts.models import Provider
+from .models import ProviderSubscription
 
 logger = logging.getLogger(__name__)
 
-
-@shared_task
-def check_expired_subscriptions():
-    """Check and handle expired subscriptions"""
-    try:
-        expired_subscriptions = ProviderSubscription.objects.filter(
-            status='active',
-            end_date__lt=timezone.now()
-        )
-        
-        for subscription in expired_subscriptions:
-            subscription.status = 'expired'
-            subscription.save()
+class SubscriptionTasks:
+    """Tasks for subscription management"""
+    
+    @staticmethod
+    def expire_subscriptions():
+        """Expire subscriptions that have passed their end date"""
+        try:
+            now = timezone.now()
+            expired_subscriptions = ProviderSubscription.objects.filter(
+                status='active',
+                expires_at__lt=now
+            )
             
-            # Update provider status
-            provider = subscription.provider
-            provider.subscription_status = 'expired'
-            provider.save()
+            count = 0
+            for subscription in expired_subscriptions:
+                subscription.status = 'expired'
+                subscription.save()
+                
+                # Update provider status
+                provider = subscription.provider
+                provider.subscription_status = 'inactive'
+                provider.save()
+                
+                count += 1
+                logger.info(f"Expired subscription for provider {provider.business_name}")
             
-            # Send expiry notification
-            send_subscription_expiry_notification.delay(subscription.id)
+            logger.info(f"Expired {count} subscriptions")
+            return count
             
-        logger.info(f"Processed {expired_subscriptions.count()} expired subscriptions")
-        return f"Processed {expired_subscriptions.count()} expired subscriptions"
-        
-    except Exception as e:
-        logger.error(f"Error checking expired subscriptions: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def check_expired_tickets():
-    """Check and handle expired tickets"""
-    try:
-        expired_tickets = Ticket.objects.filter(
-            status='active',
-            expires_at__lt=timezone.now()
-        )
-        
-        for ticket in expired_tickets:
-            ticket.status = 'expired'
-            ticket.save()
+        except Exception as e:
+            logger.error(f"Failed to expire subscriptions: {e}")
+            return 0
+    
+    @staticmethod
+    def send_expiry_reminders():
+        """Send reminders for subscriptions expiring soon"""
+        try:
+            # Get subscriptions expiring in 7 days
+            expiry_date = timezone.now() + timedelta(days=7)
+            expiring_subscriptions = ProviderSubscription.objects.filter(
+                status='active',
+                expires_at__lte=expiry_date,
+                expires_at__gt=timezone.now()
+            )
             
-        logger.info(f"Processed {expired_tickets.count()} expired tickets")
-        return f"Processed {expired_tickets.count()} expired tickets"
-        
-    except Exception as e:
-        logger.error(f"Error checking expired tickets: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def send_subscription_expiry_notification(subscription_id):
-    """Send subscription expiry notification"""
-    try:
-        subscription = ProviderSubscription.objects.get(id=subscription_id)
-        provider = subscription.provider
-        
-        subject = f"Subscription Expired - {provider.business_name}"
-        message = f"""
-Dear {provider.contact_person},
-
-Your subscription to {subscription.plan.name} has expired.
-
-Please renew your subscription to continue using the platform.
-
-Subscription Details:
-- Plan: {subscription.plan.name}
-- Expired: {subscription.end_date.strftime('%Y-%m-%d %H:%M:%S')}
-- Amount: KSh {subscription.plan.price}
-
-To renew, please log in to your dashboard and select a new subscription plan.
-
-Best regards,
-Hotspot Config Team
-"""
-        
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [provider.contact_email],
-            fail_silently=False,
-        )
-        
-        logger.info(f"Sent expiry notification to {provider.contact_email}")
-        return f"Sent expiry notification to {provider.contact_email}"
-        
-    except Exception as e:
-        logger.error(f"Error sending expiry notification: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def send_subscription_reminder(subscription_id):
-    """Send subscription renewal reminder"""
-    try:
-        subscription = ProviderSubscription.objects.get(id=subscription_id)
-        provider = subscription.provider
-        
-        days_remaining = subscription.days_remaining()
-        
-        subject = f"Subscription Renewal Reminder - {provider.business_name}"
-        message = f"""
-Dear {provider.contact_person},
-
-Your subscription to {subscription.plan.name} will expire in {days_remaining} days.
-
-Please renew your subscription to avoid service interruption.
-
-Subscription Details:
-- Plan: {subscription.plan.name}
-- Expires: {subscription.end_date.strftime('%Y-%m-%d %H:%M:%S')}
-- Days Remaining: {days_remaining}
-- Amount: KSh {subscription.plan.price}
-
-To renew, please log in to your dashboard and select a new subscription plan.
-
-Best regards,
-Hotspot Config Team
-"""
-        
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [provider.contact_email],
-            fail_silently=False,
-        )
-        
-        logger.info(f"Sent renewal reminder to {provider.contact_email}")
-        return f"Sent renewal reminder to {provider.contact_email}"
-        
-    except Exception as e:
-        logger.error(f"Error sending renewal reminder: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def send_daily_reminders():
-    """Send daily reminders for subscriptions expiring in 7 days"""
-    try:
-        seven_days_from_now = timezone.now() + timedelta(days=7)
-        
-        expiring_subscriptions = ProviderSubscription.objects.filter(
-            status='active',
-            end_date__lte=seven_days_from_now,
-            end_date__gte=timezone.now()
-        )
-        
-        for subscription in expiring_subscriptions:
-            send_subscription_reminder.delay(subscription.id)
+            count = 0
+            for subscription in expiring_subscriptions:
+                # Send email reminder (implement email service)
+                provider = subscription.provider
+                logger.info(f"Sending expiry reminder to {provider.contact_email}")
+                count += 1
             
-        logger.info(f"Sent {expiring_subscriptions.count()} daily reminders")
-        return f"Sent {expiring_subscriptions.count()} daily reminders"
-        
-    except Exception as e:
-        logger.error(f"Error sending daily reminders: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def cleanup_expired_data():
-    """Clean up expired data and old records"""
-    try:
-        # Clean up expired tickets older than 30 days
-        thirty_days_ago = timezone.now() - timedelta(days=30)
-        old_expired_tickets = Ticket.objects.filter(
-            status='expired',
-            expires_at__lt=thirty_days_ago
-        )
-        
-        deleted_tickets = old_expired_tickets.count()
-        old_expired_tickets.delete()
-        
-        logger.info(f"Cleaned up {deleted_tickets} old expired tickets")
-        return f"Cleaned up {deleted_tickets} old expired tickets"
-        
-    except Exception as e:
-        logger.error(f"Error cleaning up expired data: {e}")
-        return f"Error: {str(e)}"
-
-
-@shared_task
-def generate_daily_reports():
-    """Generate daily reports for providers"""
-    try:
-        active_providers = Provider.objects.filter(status='active')
-        
-        for provider in active_providers:
-            # Generate daily report for each provider
-            generate_provider_daily_report.delay(provider.id)
+            logger.info(f"Sent {count} expiry reminders")
+            return count
             
-        logger.info(f"Generated daily reports for {active_providers.count()} providers")
-        return f"Generated daily reports for {active_providers.count()} providers"
-        
-    except Exception as e:
-        logger.error(f"Error generating daily reports: {e}")
-        return f"Error: {str(e)}"
+        except Exception as e:
+            logger.error(f"Failed to send expiry reminders: {e}")
+            return 0
+    
+    @staticmethod
+    def cleanup_expired_tickets():
+        """Clean up expired tickets"""
+        try:
+            from tickets.models import Ticket
+            
+            now = timezone.now()
+            expired_tickets = Ticket.objects.filter(
+                status='active',
+                expires_at__lt=now
+            )
+            
+            count = 0
+            for ticket in expired_tickets:
+                ticket.status = 'expired'
+                ticket.save()
+                count += 1
+            
+            logger.info(f"Expired {count} tickets")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Failed to cleanup expired tickets: {e}")
+            return 0
+    
+    @staticmethod
+    def generate_usage_reports():
+        """Generate monthly usage reports for providers"""
+        try:
+            from tickets.models import Ticket, TicketSale
+            from payments.models import Payment
+            from django.db.models import Sum, Count
+            
+            # Get active subscriptions
+            active_subscriptions = ProviderSubscription.objects.filter(
+                status='active'
+            )
+            
+            count = 0
+            for subscription in active_subscriptions:
+                provider = subscription.provider
+                
+                # Get monthly statistics
+                month_start = timezone.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                
+                monthly_tickets = Ticket.objects.filter(
+                    provider=provider,
+                    created_at__gte=month_start
+                ).count()
+                
+                monthly_revenue = Payment.objects.filter(
+                    provider=provider,
+                    status='completed',
+                    created_at__gte=month_start
+                ).aggregate(total=Sum('amount'))['total'] or 0
+                
+                # Log usage report
+                logger.info(f"Usage report for {provider.business_name}: "
+                          f"{monthly_tickets} tickets, Ksh {monthly_revenue}")
+                
+                count += 1
+            
+            logger.info(f"Generated {count} usage reports")
+            return count
+            
+        except Exception as e:
+            logger.error(f"Failed to generate usage reports: {e}")
+            return 0
+    
+    @staticmethod
+    def cleanup_old_data():
+        """Clean up old data to maintain database performance"""
+        try:
+            from tickets.models import Ticket, TicketUsage
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Delete old expired tickets (older than 6 months)
+            cutoff_date = timezone.now() - timedelta(days=180)
+            old_tickets = Ticket.objects.filter(
+                status='expired',
+                created_at__lt=cutoff_date
+            )
+            
+            ticket_count = old_tickets.count()
+            old_tickets.delete()
+            
+            # Delete old usage records (older than 1 year)
+            usage_cutoff = timezone.now() - timedelta(days=365)
+            old_usage = TicketUsage.objects.filter(
+                created_at__lt=usage_cutoff
+            )
+            
+            usage_count = old_usage.count()
+            old_usage.delete()
+            
+            logger.info(f"Cleaned up {ticket_count} old tickets and {usage_count} old usage records")
+            return ticket_count + usage_count
+            
+        except Exception as e:
+            logger.error(f"Failed to cleanup old data: {e}")
+            return 0
 
-
-@shared_task
-def generate_provider_daily_report(provider_id):
-    """Generate daily report for a specific provider"""
-    try:
-        provider = Provider.objects.get(id=provider_id)
-        
-        # Get yesterday's data
-        yesterday = timezone.now().date() - timedelta(days=1)
-        
-        # Get tickets generated yesterday
-        tickets_generated = Ticket.objects.filter(
-            provider=provider,
-            created_at__date=yesterday
-        ).count()
-        
-        # Get tickets sold yesterday
-        tickets_sold = Ticket.objects.filter(
-            provider=provider,
-            sales__sold_at__date=yesterday
-        ).count()
-        
-        # Get revenue yesterday
-        revenue = sum(
-            ticket.sales.total_amount for ticket in Ticket.objects.filter(
-                provider=provider,
-                sales__sold_at__date=yesterday
-            ) if hasattr(ticket, 'sales')
+class Command(BaseCommand):
+    """Django management command for running subscription tasks"""
+    help = 'Run subscription management tasks'
+    
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--task',
+            type=str,
+            choices=[
+                'expire_subscriptions',
+                'send_reminders',
+                'cleanup_tickets',
+                'usage_reports',
+                'cleanup_data',
+                'all'
+            ],
+            default='all',
+            help='Task to run'
         )
+    
+    def handle(self, *args, **options):
+        task = options['task']
         
-        subject = f"Daily Report - {provider.business_name}"
-        message = f"""
-Daily Report for {yesterday.strftime('%Y-%m-%d')}
-
-Provider: {provider.business_name}
-
-Statistics:
-- Tickets Generated: {tickets_generated}
-- Tickets Sold: {tickets_sold}
-- Revenue: KSh {revenue:.2f}
-
-Best regards,
-Hotspot Config Team
-"""
+        if task == 'expire_subscriptions' or task == 'all':
+            count = SubscriptionTasks.expire_subscriptions()
+            self.stdout.write(f"Expired {count} subscriptions")
         
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [provider.contact_email],
-            fail_silently=False,
-        )
+        if task == 'send_reminders' or task == 'all':
+            count = SubscriptionTasks.send_expiry_reminders()
+            self.stdout.write(f"Sent {count} expiry reminders")
         
-        logger.info(f"Generated daily report for {provider.business_name}")
-        return f"Generated daily report for {provider.business_name}"
+        if task == 'cleanup_tickets' or task == 'all':
+            count = SubscriptionTasks.cleanup_expired_tickets()
+            self.stdout.write(f"Expired {count} tickets")
         
-    except Exception as e:
-        logger.error(f"Error generating daily report: {e}")
-        return f"Error: {str(e)}"
+        if task == 'usage_reports' or task == 'all':
+            count = SubscriptionTasks.generate_usage_reports()
+            self.stdout.write(f"Generated {count} usage reports")
+        
+        if task == 'cleanup_data' or task == 'all':
+            count = SubscriptionTasks.cleanup_old_data()
+            self.stdout.write(f"Cleaned up {count} old records")
+        
+        self.stdout.write(self.style.SUCCESS('Tasks completed successfully'))

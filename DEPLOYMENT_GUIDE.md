@@ -1,334 +1,365 @@
-# MikroTik Hotspot Ticketing System - Deployment Guide
+# 🚀 MikroTik Hotspot Platform - Complete Deployment Guide
 
-## 🚀 Complete Deployment Guide
+## 📋 Overview
 
-This guide will help you deploy the MikroTik Hotspot Ticketing System to Heroku with Supabase database and Pesapal payment integration.
+This guide covers deploying the complete MikroTik Hotspot Platform to Heroku with all features:
+- **Super Admin Dashboard** - Global platform management
+- **Provider Dashboard** - Multi-tenant provider management
+- **Captive Portal** - Customer-facing WiFi access
+- **Payment Integration** - M-PESA Daraja + Pesapal
+- **MikroTik Integration** - Router configuration generation
+- **Automation** - Heroku Scheduler tasks
 
-## 📋 Prerequisites
+## 🛠 Prerequisites
 
-- Heroku CLI installed
-- Git installed
-- Python 3.11+ installed locally
-- Supabase account
-- Pesapal developer account
+### Required Accounts
+- [ ] **Heroku Account** - [heroku.com](https://heroku.com)
+- [ ] **GitHub Account** - [github.com](https://github.com)
+- [ ] **Supabase Account** - [supabase.com](https://supabase.com) (for PostgreSQL)
+- [ ] **Pesapal Account** - [pesapal.com](https://pesapal.com) (for payments)
+- [ ] **M-PESA Daraja API** - [developer.safaricom.co.ke](https://developer.safaricom.co.ke)
 
-## 🗄️ Database Setup (Supabase)
+### Required Tools
+- [ ] **Git** - [git-scm.com](https://git-scm.com)
+- [ ] **Heroku CLI** - [devcenter.heroku.com/articles/heroku-cli](https://devcenter.heroku.com/articles/heroku-cli)
+- [ ] **Python 3.11+** - [python.org](https://python.org)
+
+## 🗄 Database Setup (Supabase)
 
 ### 1. Create Supabase Project
-
-1. Go to [Supabase](https://supabase.com) and create a new project
-2. Note down your project URL and API keys
-3. Go to Settings > Database and copy your connection string
-
-### 2. Update Database Schema
-
-Run the following SQL in your Supabase SQL editor:
-
-```sql
--- Enable UUID extension
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- Run the migrations from database_schema.sql
--- (Copy the contents of database_schema.sql and run in Supabase)
+```bash
+# Go to supabase.com and create a new project
+# Note down your project URL and API keys
 ```
 
-## 💳 Payment Setup (Pesapal)
+### 2. Configure Database
+```sql
+-- Enable required extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-### 1. Create Pesapal Account
-
-1. Go to [Pesapal Developer Portal](https://developer.pesapal.com/)
-2. Create a developer account
-3. Create a new application
-4. Get your Consumer Key and Consumer Secret
-
-### 2. Configure Webhooks
-
-Set up the following webhook URLs in your Pesapal dashboard:
-- Callback URL: `https://your-app.herokuapp.com/api/payments/pesapal/callback/`
-- IPN URL: `https://your-app.herokuapp.com/api/payments/pesapal/ipn/`
+-- Set up Row Level Security (RLS)
+ALTER TABLE accounts_provider ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tickets_ticket ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payments_payment ENABLE ROW LEVEL SECURITY;
+```
 
 ## 🚀 Heroku Deployment
 
 ### 1. Create Heroku App
-
 ```bash
 # Login to Heroku
 heroku login
 
-# Create new app
-heroku create your-hotspot-ticketing-app
+# Create app
+heroku create your-hotspot-platform
 
-# Add PostgreSQL addon (if not using Supabase)
-heroku addons:create heroku-postgresql:hobby-dev
-
-# Add Redis addon for Celery
-heroku addons:create heroku-redis:hobby-dev
-
-# Add SendGrid for emails
-heroku addons:create sendgrid:starter
+# Add PostgreSQL addon
+heroku addons:create heroku-postgresql:mini
 ```
 
-### 2. Set Environment Variables
-
+### 2. Configure Environment Variables
 ```bash
-# Django Settings
-heroku config:set SECRET_KEY="your-super-secret-key-here"
+# Set environment variables
+heroku config:set SECRET_KEY="your-secret-key-here"
 heroku config:set DEBUG=False
-heroku config:set ALLOWED_HOSTS="your-hotspot-ticketing-app.herokuapp.com"
+heroku config:set ALLOWED_HOSTS="your-app.herokuapp.com"
+heroku config:set ENCRYPTION_KEY="your-encryption-key-here"
 
-# Database (Supabase)
-heroku config:set DATABASE_URL="postgresql://username:password@host:port/database"
-heroku config:set SUPABASE_URL="https://your-project.supabase.co"
-heroku config:set SUPABASE_KEY="your-supabase-anon-key"
-heroku config:set SUPABASE_SERVICE_ROLE_KEY="your-supabase-service-role-key"
+# Database
+heroku config:set DATABASE_URL="$(heroku config:get DATABASE_URL)"
 
-# Pesapal Settings
-heroku config:set PESAPAL_CONSUMER_KEY="your-pesapal-consumer-key"
-heroku config:set PESAPAL_CONSUMER_SECRET="your-pesapal-consumer-secret"
-heroku config:set PESAPAL_BASE_URL="https://cybqa.pesapal.com/pesapalv3/api/"
-heroku config:set PESAPAL_CALLBACK_URL="https://your-hotspot-ticketing-app.herokuapp.com/api/payments/pesapal/callback/"
-heroku config:set PESAPAL_IPN_URL="https://your-hotspot-ticketing-app.herokuapp.com/api/payments/pesapal/ipn/"
+# Pesapal Configuration
+heroku config:set PESAPAL_CONSUMER_KEY="your-pesapal-key"
+heroku config:set PESAPAL_CONSUMER_SECRET="your-pesapal-secret"
+heroku config:set PESAPAL_CALLBACK_URL="https://your-app.herokuapp.com/payments/pesapal/callback/"
+heroku config:set PESAPAL_IPN_URL="https://your-app.herokuapp.com/payments/pesapal/ipn/"
 
-# Email Settings
-heroku config:set SENDGRID_API_KEY="your-sendgrid-api-key"
-heroku config:set DEFAULT_FROM_EMAIL="noreply@yourdomain.com"
+# Email Configuration (Optional)
+heroku config:set EMAIL_HOST="smtp.gmail.com"
+heroku config:set EMAIL_HOST_USER="your-email@gmail.com"
+heroku config:set EMAIL_HOST_PASSWORD="your-app-password"
+heroku config:set EMAIL_PORT=587
+heroku config:set EMAIL_USE_TLS=True
 
-# Redis
-heroku config:set REDIS_URL="redis://localhost:6379"
-
-# Frontend URL
-heroku config:set FRONTEND_URL="https://your-hotspot-ticketing-app.herokuapp.com"
+# Supabase Configuration (if using)
+heroku config:set SUPABASE_URL="your-supabase-url"
+heroku config:set SUPABASE_KEY="your-supabase-key"
+heroku config:set SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 ```
 
-### 3. Deploy Application
-
+### 3. Deploy to Heroku
 ```bash
-# Initialize git if not already done
+# Initialize git repository
 git init
 git add .
 git commit -m "Initial commit"
 
 # Add Heroku remote
-heroku git:remote -a your-hotspot-ticketing-app
+heroku git:remote -a your-hotspot-platform
 
-# Deploy to Heroku
+# Deploy
 git push heroku main
-```
 
-### 4. Run Database Migrations
-
-```bash
 # Run migrations
 heroku run python manage.py migrate
 
 # Create superuser
 heroku run python manage.py createsuperuser
 
-# Load sample data
-heroku run python manage.py create_sample_ticket_types
+# Collect static files
+heroku run python manage.py collectstatic --noinput
 ```
 
-### 5. Set Up Background Jobs
+## 🔧 Post-Deployment Configuration
 
+### 1. Set Up Heroku Scheduler
 ```bash
 # Add Heroku Scheduler addon
 heroku addons:create scheduler:standard
+
+# Configure scheduled tasks in Heroku Dashboard:
+# - Daily at 2 AM: python manage.py run_tasks --task=expire_subscriptions
+# - Daily at 3 AM: python manage.py run_tasks --task=cleanup_tickets
+# - Daily at 4 AM: python manage.py run_tasks --task=cleanup_data
+# - Weekly on Monday at 5 AM: python manage.py run_tasks --task=usage_reports
 ```
 
-Add these scheduled jobs in the Heroku dashboard:
-
-1. **Daily Ticket Expiry Check** (Daily at 2:00 AM UTC):
-   ```
-   python manage.py shell -c "from tickets.tasks import expire_tickets; expire_tickets.delay()"
-   ```
-
-2. **Daily Cleanup** (Daily at 3:00 AM UTC):
-   ```
-   python manage.py shell -c "from tickets.tasks import cleanup_old_tickets; cleanup_old_tickets.delay()"
-   ```
-
-3. **Daily Reports** (Daily at 4:00 AM UTC):
-   ```
-   python manage.py shell -c "from tickets.tasks import generate_daily_reports; generate_daily_reports.delay()"
-   ```
-
-## 🔧 Local Development Setup
-
-### 1. Clone and Setup
-
+### 2. Configure Domain (Optional)
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd hotspot-billing-system
+# Add custom domain
+heroku domains:add your-domain.com
 
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install Node.js dependencies
-npm install
+# Configure DNS
+# Add CNAME record: www -> your-app.herokuapp.com
 ```
 
-### 2. Environment Variables
-
-Create a `.env` file:
-
+### 3. Set Up SSL
 ```bash
-# Django Settings
-SECRET_KEY=your-secret-key-here
-DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# Database (Supabase)
-DATABASE_URL=postgresql://username:password@host:port/database
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-supabase-anon-key
-SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
-
-# Pesapal Settings
-PESAPAL_CONSUMER_KEY=your-pesapal-consumer-key
-PESAPAL_CONSUMER_SECRET=your-pesapal-consumer-secret
-PESAPAL_BASE_URL=https://cybqa.pesapal.com/pesapalv3/api/
-PESAPAL_CALLBACK_URL=http://localhost:8000/api/payments/pesapal/callback/
-PESAPAL_IPN_URL=http://localhost:8000/api/payments/pesapal/ipn/
-
-# Email Settings
-SENDGRID_API_KEY=your-sendgrid-api-key
-DEFAULT_FROM_EMAIL=noreply@yourdomain.com
-
-# Redis
-REDIS_URL=redis://localhost:6379
-
-# Frontend URL
-FRONTEND_URL=http://localhost:8000
+# Heroku provides SSL automatically for *.herokuapp.com domains
+# For custom domains, use Heroku SSL addon
+heroku addons:create ssl:endpoint
 ```
 
-### 3. Run Development Server
+## 📱 M-PESA Daraja API Setup
 
+### 1. Register for Daraja API
+1. Go to [developer.safaricom.co.ke](https://developer.safaricom.co.ke)
+2. Create an account and register your app
+3. Get your Consumer Key and Consumer Secret
+4. Set up your callback URLs
+
+### 2. Configure Callback URLs
+```
+# For each provider, the system will generate:
+https://your-app.herokuapp.com/captive-portal/callback/{provider_id}/
+
+# Add these to your Daraja API configuration
+```
+
+### 3. Test M-PESA Integration
 ```bash
-# Run migrations
-python manage.py migrate
-
-# Create superuser
-python manage.py createsuperuser
-
-# Load sample data
-python manage.py create_sample_ticket_types
-
-# Run development server
-python manage.py runserver
+# Test the payment bucket system
+heroku run python manage.py shell
+>>> from payments.payment_bucket import payment_bucket_service
+>>> # Test with sandbox credentials
 ```
 
-## 📱 Features Overview
+## 💳 Pesapal Integration Setup
 
-### ✅ Implemented Features
+### 1. Register with Pesapal
+1. Go to [pesapal.com](https://pesapal.com)
+2. Create a merchant account
+3. Get your Consumer Key and Consumer Secret
+4. Configure your callback URLs
 
-1. **Landing Page** - Marketing-focused homepage with pricing and features
-2. **User Authentication** - Registration, login, and user management
-3. **Ticket Management** - Create, manage, and track tickets/vouchers
-4. **Ticket Types** - Time-based and data-based ticket configurations
-5. **Sales Tracking** - Revenue tracking and analytics
-6. **Dashboard** - User-friendly dashboard for ticket management
-7. **API Endpoints** - RESTful API for all ticket operations
-8. **Admin Interface** - Django admin for system management
+### 2. Configure Callback URLs
+```
+# Set in your environment variables:
+PESAPAL_CALLBACK_URL=https://your-app.herokuapp.com/subscriptions/callback/
+PESAPAL_IPN_URL=https://your-app.herokuapp.com/subscriptions/ipn/
+```
 
-### 🚧 Pending Features
+## 🔐 Security Configuration
 
-1. **Pesapal Integration** - Payment processing with webhooks
-2. **MikroTik Config Generation** - Generate .rsc files for routers
-3. **Ticket Expiry Automation** - Automatic ticket expiration
-4. **Printing System** - PDF generation for tickets
-5. **Advanced Analytics** - Detailed reporting and charts
+### 1. Content Security Policy
+The platform includes a custom CSP middleware that:
+- Allows inline scripts for the captive portal
+- Prevents XSS attacks
+- Ensures secure payment processing
 
-## 🔗 API Endpoints
+### 2. Data Encryption
+- M-PESA credentials are encrypted using Fernet encryption
+- Encryption key is stored in environment variables
+- All sensitive data is encrypted at rest
 
-### Authentication
-- `POST /api/auth/register/` - User registration
-- `POST /api/auth/login/` - User login
-- `POST /api/auth/logout/` - User logout
+### 3. Access Control
+- Super Admin: Full platform access
+- Provider: Own data only
+- End Users: No web access (captive portal only)
 
-### Tickets
-- `GET /api/tickets/ticket-types/` - List ticket types
-- `GET /api/tickets/tickets/` - List user tickets
-- `POST /api/tickets/tickets/` - Create new ticket
-- `GET /api/tickets/tickets/stats/` - Ticket statistics
-- `POST /api/tickets/batches/` - Create ticket batch
-- `GET /api/tickets/sales/` - List ticket sales
+## 📊 Monitoring and Analytics
 
-### Dashboard
-- `GET /api/dashboard/stats/` - Dashboard statistics
-- `GET /api/dashboard/subscription/` - Subscription status
+### 1. Heroku Metrics
+```bash
+# View app metrics
+heroku logs --tail
+heroku ps
+heroku config
+```
 
-## 🎯 Usage Guide
+### 2. Database Monitoring
+```bash
+# Check database status
+heroku pg:info
+heroku pg:psql
+```
 
-### For Hotspot Operators
+### 3. Custom Analytics
+The platform includes built-in analytics for:
+- Provider performance
+- Revenue tracking
+- Ticket usage statistics
+- System health monitoring
 
-1. **Sign Up** - Create an account on the platform
-2. **Choose Plan** - Select a subscription plan
-3. **Create Ticket Types** - Set up time-based or data-based tickets
-4. **Generate Tickets** - Create individual tickets or batches
-5. **Sell Tickets** - Track sales and revenue
-6. **Monitor Usage** - View analytics and reports
-
-### For Customers
-
-1. **Purchase Tickets** - Buy tickets from hotspot operators
-2. **Use WiFi** - Connect using ticket credentials
-3. **Track Usage** - Monitor remaining time/data
-
-## 🔒 Security Features
-
-- **Authentication** - JWT token-based authentication
-- **Authorization** - Role-based access control
-- **Payment Security** - Pesapal signature verification
-- **Data Protection** - Row-level security in Supabase
-- **HTTPS** - Enforced SSL in production
-
-## 📊 Monitoring
-
-### Heroku Metrics
-- Monitor app performance in Heroku dashboard
-- Set up alerts for errors and performance issues
-- Monitor database and Redis usage
-
-### Application Logs
-- Django logs for application errors
-- Celery logs for background job status
-- Payment logs for transaction tracking
-
-## 🆘 Troubleshooting
+## 🚨 Troubleshooting
 
 ### Common Issues
 
-1. **Database Connection Issues**
-   - Verify DATABASE_URL is correct
-   - Check Supabase connection settings
+#### 1. Migration Errors
+```bash
+# Reset migrations if needed
+heroku run python manage.py migrate --fake-initial
+```
 
-2. **Payment Integration Issues**
-   - Verify Pesapal credentials
-   - Check webhook URLs are accessible
+#### 2. Static Files Not Loading
+```bash
+# Recollect static files
+heroku run python manage.py collectstatic --noinput
+```
 
-3. **Background Jobs Not Running**
-   - Verify Redis connection
-   - Check Heroku Scheduler configuration
+#### 3. Database Connection Issues
+```bash
+# Check database status
+heroku pg:info
+heroku pg:psql
+```
+
+#### 4. Payment Integration Issues
+- Verify M-PESA credentials are correct
+- Check callback URLs are accessible
+- Ensure Pesapal credentials are valid
+
+### Debug Mode
+```bash
+# Enable debug mode temporarily
+heroku config:set DEBUG=True
+heroku restart
+```
+
+## 📈 Scaling and Performance
+
+### 1. Database Optimization
+```sql
+-- Add indexes for better performance
+CREATE INDEX idx_tickets_provider_status ON tickets_ticket(provider_id, status);
+CREATE INDEX idx_payments_provider_status ON payments_payment(provider_id, status);
+CREATE INDEX idx_subscriptions_provider_status ON subscriptions_providersubscription(provider_id, status);
+```
+
+### 2. Caching
+```bash
+# Add Redis for caching
+heroku addons:create heroku-redis:mini
+```
+
+### 3. CDN for Static Files
+```bash
+# Add CloudFront or similar CDN for static files
+```
+
+## 🔄 Backup and Recovery
+
+### 1. Database Backups
+```bash
+# Create database backup
+heroku pg:backups:capture
+
+# Download backup
+heroku pg:backups:download
+```
+
+### 2. Automated Backups
+```bash
+# Set up automated daily backups
+heroku addons:create pgbackups:auto-week
+```
+
+## 📞 Support and Maintenance
+
+### 1. Log Monitoring
+```bash
+# Monitor logs in real-time
+heroku logs --tail --app your-hotspot-platform
+```
+
+### 2. Performance Monitoring
+```bash
+# Check app performance
+heroku ps:scale web=1
+heroku ps:restart
+```
+
+### 3. Regular Maintenance
+- Monitor database performance
+- Check payment integration status
+- Review security logs
+- Update dependencies regularly
+
+## 🎯 Production Checklist
+
+### Pre-Launch
+- [ ] All environment variables configured
+- [ ] Database migrations applied
+- [ ] Super user created
+- [ ] M-PESA integration tested
+- [ ] Pesapal integration tested
+- [ ] SSL certificate active
+- [ ] Domain configured (if applicable)
+- [ ] Monitoring set up
+
+### Post-Launch
+- [ ] Test all user flows
+- [ ] Verify payment processing
+- [ ] Check automated tasks
+- [ ] Monitor performance
+- [ ] Set up alerts
+- [ ] Create documentation for users
+
+## 📚 Additional Resources
+
+### Documentation
+- [Django Deployment Guide](https://docs.djangoproject.com/en/stable/howto/deployment/)
+- [Heroku Python Support](https://devcenter.heroku.com/articles/python-support)
+- [M-PESA Daraja API Documentation](https://developer.safaricom.co.ke/docs)
 
 ### Support
-
-- Check application logs: `heroku logs --tail`
-- Verify environment variables: `heroku config`
-- Test database connection: `heroku run python manage.py dbshell`
-
-## 🎉 Success!
-
-Your MikroTik Hotspot Ticketing System is now deployed and ready to help hotspot operators monetize their WiFi services!
-
-### Next Steps
-
-1. Test the application thoroughly
-2. Set up monitoring and alerts
-3. Train users on the system
-4. Monitor performance and usage
-5. Plan for scaling as your user base grows
+- Platform Support: support@hotspotplatform.com
+- Technical Issues: tech@hotspotplatform.com
+- Billing Support: billing@hotspotplatform.com
 
 ---
 
-**Built with ❤️ for Kenyan MikroTik hotspot providers**
+## 🎉 Congratulations!
+
+Your MikroTik Hotspot Platform is now fully deployed and ready for production use! The platform includes:
+
+✅ **Multi-tenant architecture** with provider isolation  
+✅ **Payment integration** with M-PESA and Pesapal  
+✅ **Captive portal** for customer WiFi access  
+✅ **MikroTik integration** with config generation  
+✅ **Super admin oversight** with global analytics  
+✅ **Automated tasks** for maintenance  
+✅ **Security features** with encryption and CSP  
+
+The platform is now ready to serve hotspot providers and their customers!

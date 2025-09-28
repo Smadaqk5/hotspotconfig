@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ provider.business_name }} - WiFi Access</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .plan-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .plan-card.selected {
+            border-color: #3B82F6;
+            background-color: #EBF8FF;
+        }
+        .loading {
+            display: none;
+        }
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-wifi text-3xl text-blue-600"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2">{{ provider.business_name }}</h1>
+            <p class="text-blue-100">Connect to WiFi</p>
+        </div>
+
+        <!-- WiFi Plans -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 mb-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 text-center">Choose Your Plan</h2>
+            
+            <div class="space-y-3" id="plans-container">
+                {% for ticket_type in ticket_types %}
+                <div class="plan-card border-2 border-gray-200 rounded-xl p-4 cursor-pointer" 
+                     data-ticket-type-id="{{ ticket_type.id }}" 
+                     data-price="{{ ticket_type.price }}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 rounded-lg flex items-center justify-center mr-4" 
+                                 style="background-color: {{ ticket_type.color }}20; color: {{ ticket_type.color }}">
+                                <i class="{{ ticket_type.icon }} text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">{{ ticket_type.name }}</h3>
+                                <p class="text-sm text-gray-600">
+                                    {% if ticket_type.type == 'time' %}
+                                        {{ ticket_type.get_duration_display }}
+                                    {% else %}
+                                        {{ ticket_type.get_duration_display }}
+                                    {% endif %}
+                                    • {{ ticket_type.download_speed_mbps }}Mbps
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-gray-900">Ksh {{ ticket_type.price }}</div>
+                            {% if ticket_type.is_featured %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-star mr-1"></i>Popular
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-500">No WiFi plans available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Payment Form -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6" id="payment-form" style="display: none;">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Complete Payment</h3>
+            
+            <form id="payment-form-element">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" 
+                           id="phone-number" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                           placeholder="07XXXXXXXX or 254XXXXXXXX"
+                           required>
+                    <p class="text-xs text-gray-500 mt-1">Enter your M-PESA registered phone number</p>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm font-medium text-blue-900">Selected Plan:</span>
+                            <span class="text-lg font-bold text-blue-900" id="selected-plan-name">-</span>
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-sm font-medium text-blue-900">Amount:</span>
+                            <span class="text-xl font-bold text-blue-900" id="selected-plan-price">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center">
+                    <i class="fas fa-mobile-alt mr-2"></i>
+                    Pay with M-PESA
+                </button>
+            </form>
+        </div>
+
+        <!-- Loading State -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 text-center loading" id="loading">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Processing Payment</h3>
+            <p class="text-gray-600">Please check your phone for M-PESA prompt...</p>
+        </div>
+
+        <!-- Success State -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 text-center loading" id="success">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-2xl text-green-600"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Successful!</h3>
+            <p class="text-gray-600 mb-4">Your WiFi access has been activated</p>
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <div class="text-sm text-gray-600 mb-2">Your WiFi Credentials:</div>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="font-medium">Username:</span>
+                        <span class="font-mono" id="ticket-username">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">Password:</span>
+                        <span class="font-mono" id="ticket-password">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium">Expires:</span>
+                        <span id="ticket-expires">-</span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="connectToWiFi()" 
+                    class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                <i class="fas fa-wifi mr-2"></i>
+                Connect to WiFi
+            </button>
+        </div>
+
+        <!-- Error State -->
+        <div class="bg-white rounded-2xl shadow-2xl p-6 text-center loading" id="error">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-2xl text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Payment Failed</h3>
+            <p class="text-gray-600 mb-4" id="error-message">Please try again</p>
+            <button onclick="resetForm()" 
+                    class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-700 transition-colors">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let selectedTicketType = null;
+        let checkoutRequestId = null;
+        let paymentCheckInterval = null;
+
+        // Plan selection
+        document.querySelectorAll('.plan-card').forEach(card => {
+            card.addEventListener('click', function() {
+                // Remove previous selection
+                document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+                
+                // Select current card
+                this.classList.add('selected');
+                
+                // Store selection
+                selectedTicketType = {
+                    id: this.dataset.ticketTypeId,
+                    name: this.querySelector('h3').textContent,
+                    price: this.dataset.price
+                };
+                
+                // Show payment form
+                document.getElementById('payment-form').style.display = 'block';
+                document.getElementById('selected-plan-name').textContent = selectedTicketType.name;
+                document.getElementById('selected-plan-price').textContent = `Ksh ${selectedTicketType.price}`;
+            });
+        });
+
+        // Payment form submission
+        document.getElementById('payment-form-element').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const phoneNumber = document.getElementById('phone-number').value;
+            
+            if (!selectedTicketType) {
+                showError('Please select a plan first');
+                return;
+            }
+            
+            if (!phoneNumber) {
+                showError('Please enter your phone number');
+                return;
+            }
+            
+            initiatePayment(phoneNumber);
+        });
+
+        function initiatePayment(phoneNumber) {
+            showLoading();
+            
+            fetch('/captive-portal/payment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    provider_id: {{ provider.id }},
+                    ticket_type_id: selectedTicketType.id,
+                    phone_number: phoneNumber
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    checkoutRequestId = data.checkout_request_id;
+                    startPaymentStatusCheck();
+                } else {
+                    showError(data.message || 'Payment initiation failed');
+                }
+            })
+            .catch(error => {
+                console.error('Payment error:', error);
+                showError('Payment failed. Please try again.');
+            });
+        }
+
+        function startPaymentStatusCheck() {
+            paymentCheckInterval = setInterval(() => {
+                checkPaymentStatus();
+            }, 3000); // Check every 3 seconds
+            
+            // Stop checking after 5 minutes
+            setTimeout(() => {
+                if (paymentCheckInterval) {
+                    clearInterval(paymentCheckInterval);
+                    showError('Payment timeout. Please try again.');
+                }
+            }, 300000);
+        }
+
+        function checkPaymentStatus() {
+            if (!checkoutRequestId) return;
+            
+            fetch('/captive-portal/payment/status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    checkout_request_id: checkoutRequestId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.status === 'completed') {
+                    clearInterval(paymentCheckInterval);
+                    showSuccess(data.ticket);
+                } else if (data.success && data.status === 'pending') {
+                    // Continue waiting
+                } else {
+                    clearInterval(paymentCheckInterval);
+                    showError(data.message || 'Payment failed');
+                }
+            })
+            .catch(error => {
+                console.error('Status check error:', error);
+                clearInterval(paymentCheckInterval);
+                showError('Payment status check failed');
+            });
+        }
+
+        function showLoading() {
+            hideAllStates();
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function showSuccess(ticket) {
+            hideAllStates();
+            document.getElementById('success').classList.add('show');
+            document.getElementById('ticket-username').textContent = ticket.username;
+            document.getElementById('ticket-password').textContent = ticket.password;
+            document.getElementById('ticket-expires').textContent = new Date(ticket.expires_at).toLocaleString();
+        }
+
+        function showError(message) {
+            hideAllStates();
+            document.getElementById('error').classList.add('show');
+            document.getElementById('error-message').textContent = message;
+        }
+
+        function hideAllStates() {
+            document.querySelectorAll('.loading').forEach(el => el.classList.remove('show'));
+        }
+
+        function resetForm() {
+            hideAllStates();
+            document.getElementById('payment-form').style.display = 'none';
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+            selectedTicketType = null;
+            checkoutRequestId = null;
+            if (paymentCheckInterval) {
+                clearInterval(paymentCheckInterval);
+            }
+        }
+
+        function connectToWiFi() {
+            // This would typically redirect to the WiFi connection page
+            // or provide instructions for manual connection
+            alert('Please connect to the WiFi network using the credentials provided above.');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

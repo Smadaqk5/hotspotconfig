@@ -48,9 +48,9 @@ INSTALLED_APPS = [
     'tickets',
     'reports',
     'super_admin',
+    'captive_portal',
     'provider',
     'cashier',
-    'captive_portal',
 ]
 
 MIDDLEWARE = [
