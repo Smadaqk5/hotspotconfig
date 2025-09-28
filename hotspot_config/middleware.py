@@ -12,15 +12,22 @@ class CSPMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
+        # In development or if CSP is disabled, don't set CSP headers
+        if getattr(settings, 'DEBUG', False) or getattr(settings, 'DISABLE_CSP', False):
+            # Remove any existing CSP headers in development
+            response.pop('Content-Security-Policy', None)
+            response.pop('Content-Security-Policy-Report-Only', None)
+            return response
+        
         # Set very permissive CSP headers to avoid conflicts with browser extensions
         # This ensures inline scripts work in all environments including Heroku
         csp_policy = (
-            "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; "
-            "style-src 'self' 'unsafe-inline' https:; "
-            "img-src 'self' data: https: blob:; "
-            "font-src 'self' https:; "
-            "connect-src 'self' https:; "
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: chrome-extension:; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: chrome-extension:; "
+            "style-src 'self' 'unsafe-inline' https: chrome-extension:; "
+            "img-src 'self' data: https: blob: chrome-extension:; "
+            "font-src 'self' https: chrome-extension:; "
+            "connect-src 'self' https: chrome-extension:; "
             "object-src 'none'; "
             "base-uri 'self'; "
             "frame-ancestors 'none';"

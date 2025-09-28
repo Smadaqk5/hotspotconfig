@@ -26,6 +26,9 @@ else:
 # Encryption key for sensitive data (M-PESA credentials)
 ENCRYPTION_KEY = config('ENCRYPTION_KEY', default=None)
 
+# Disable CSP in development to avoid browser extension conflicts
+DISABLE_CSP = config('DISABLE_CSP', default=DEBUG, cast=bool)
+
 # Content Security Policy is handled by CSPMiddleware
 
 # Application definition
