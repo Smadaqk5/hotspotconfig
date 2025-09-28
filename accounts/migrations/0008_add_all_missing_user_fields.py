@@ -7,8 +7,11 @@ def add_all_missing_fields(apps, schema_editor):
     """Add all missing fields to accounts_user table"""
     with schema_editor.connection.cursor() as cursor:
         # Check if we're using SQLite or PostgreSQL
-        cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts_user'")
-        is_sqlite = cursor.fetchone() is not None
+        try:
+            cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts_user'")
+            is_sqlite = True
+        except:
+            is_sqlite = False
         
         if is_sqlite:
             # SQLite: Use PRAGMA to check columns
@@ -77,6 +80,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             add_all_missing_fields,
+            reverse_add_all_missing_fields,
+        ),
+    ]
             reverse_add_all_missing_fields,
         ),
     ]
