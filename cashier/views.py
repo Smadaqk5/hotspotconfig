@@ -28,6 +28,13 @@ def cashier_dashboard(request):
     # Get statistics based on permissions
     stats = {}
     
+    # Always get basic ticket statistics
+    total_tickets_generated = Ticket.objects.filter(provider=provider).count()
+    active_tickets = Ticket.objects.filter(
+        provider=provider, 
+        status='active'
+    ).count()
+    
     if cashier.can_view_sales:
         # Sales statistics
         today = timezone.now().date()
@@ -41,16 +48,9 @@ def cashier_dashboard(request):
             sold_at__date=today
         ).aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     
-    if cashier.can_generate_tickets:
-        # Ticket generation statistics
-        stats['tickets_generated'] = Ticket.objects.filter(provider=provider).count()
-        stats['active_tickets'] = Ticket.objects.filter(
-            provider=provider, 
-            status='active'
-        ).count()
-    
     # Recent activity
     recent_activity = []
+    recent_sales = []
     if cashier.can_view_sales:
         recent_sales = TicketSale.objects.filter(
             ticket__provider=provider
@@ -61,7 +61,10 @@ def cashier_dashboard(request):
         'cashier': cashier,
         'provider': provider,
         'stats': stats,
+        'total_tickets_generated': total_tickets_generated,
+        'active_tickets': active_tickets,
         'recent_activity': recent_activity,
+        'recent_sales': recent_sales,
         'page_title': f'Cashier Dashboard - {provider.business_name}'
     }
     return render(request, 'cashier/dashboard.html', context)
