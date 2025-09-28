@@ -7,11 +7,8 @@ def add_all_missing_fields(apps, schema_editor):
     """Add all missing fields to accounts_user table"""
     with schema_editor.connection.cursor() as cursor:
         # Check if we're using SQLite or PostgreSQL
-        try:
-            cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts_user'")
-            is_sqlite = cursor.fetchone() is not None
-        except:
-            is_sqlite = False
+        cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='accounts_user'")
+        is_sqlite = cursor.fetchone() is not None
         
         if is_sqlite:
             # SQLite: Use PRAGMA to check columns
