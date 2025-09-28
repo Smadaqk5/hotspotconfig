@@ -12,18 +12,27 @@ class CSPMiddleware:
     def __call__(self, request):
         response = self.get_response(request)
         
-        # Add CSP headers that allow inline scripts for both development and production
-        # This is necessary for the application to work properly with inline JavaScript
-        response['Content-Security-Policy'] = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
-            "style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' https://fonts.gstatic.com; "
-            "connect-src 'self'; "
+        # Set very permissive CSP headers to avoid conflicts with browser extensions
+        # This ensures inline scripts work in all environments including Heroku
+        csp_policy = (
+            "default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; "
+            "style-src 'self' 'unsafe-inline' https:; "
+            "img-src 'self' data: https: blob:; "
+            "font-src 'self' https:; "
+            "connect-src 'self' https:; "
             "object-src 'none'; "
             "base-uri 'self'; "
             "frame-ancestors 'none';"
         )
+        
+        # Override any existing CSP headers
+        response['Content-Security-Policy'] = csp_policy
+        response['Content-Security-Policy-Report-Only'] = None  # Remove report-only headers
+        
+        # Additional security headers
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['X-Frame-Options'] = 'DENY'
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         
         return response
