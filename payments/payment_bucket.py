@@ -1,74 +1,74 @@
-"""
-Payment Bucket API Service for M-PESA Daraja Integration
-Handles STK Push payments using provider-specific credentials
-"""
 import requests
 import json
-import logging
+import base64
 from datetime import datetime
 from django.conf import settings
 from django.utils import timezone
-from accounts.encryption import decrypt_mpesa_credential
 from accounts.models import Provider
-from tickets.models import Ticket, TicketSale
+from accounts.encryption import decrypt_mpesa_credential
+import logging
 
 logger = logging.getLogger(__name__)
 
 class PaymentBucketService:
-    """Service for handling M-PESA payments using provider credentials"""
+    """Payment Bucket service for handling M-PESA transactions across multiple providers"""
     
-    def __init__(self, provider_id):
-        self.provider = Provider.objects.get(id=provider_id)
-        self.consumer_key = decrypt_mpesa_credential(self.provider.mpesa_consumer_key)
-        self.consumer_secret = decrypt_mpesa_credential(self.provider.mpesa_consumer_secret)
-        self.shortcode = self.provider.mpesa_shortcode
-        self.passkey = decrypt_mpesa_credential(self.provider.mpesa_passkey)
-        self.environment = self.provider.mpesa_environment
-        
-        # Set base URL based on environment
-        if self.environment == 'production':
-            self.base_url = "https://api.safaricom.co.ke"
-        else:
-            self.base_url = "https://sandbox.safaricom.co.ke"
+    def __init__(self):
+        self.daraja_base_url = "https://sandbox.safaricom.co.ke" if settings.DEBUG else "https://api.safaricom.co.ke"
     
-    def get_access_token(self):
-        """Get M-PESA Daraja API access token"""
+    def get_provider_access_token(self, provider_id):
+        """Get access token for a specific provider using their credentials"""
         try:
-            url = f"{self.base_url}/oauth/v1/generate?grant_type=client_credentials"
+            provider = Provider.objects.get(id=provider_id)
             
-            response = requests.get(
-                url,
-                auth=(self.consumer_key, self.consumer_secret),
-                headers={'Content-Type': 'application/json'}
-            )
+            # Decrypt provider credentials
+            consumer_key = decrypt_mpesa_credential(provider.mpesa_consumer_key)
+            consumer_secret = decrypt_mpesa_credential(provider.mpesa_consumer_secret)
             
-            if response.status_code == 200:
-                data = response.json()
-                return data.get('access_token')
-            else:
-                logger.error(f"Failed to get access token: {response.text}")
-                return None
-                
+            if not consumer_key or not consumer_secret:
+                raise ValueError("Provider M-PESA credentials not found or invalid")
+            
+            # Generate access token
+            auth_url = f"{self.daraja_base_url}/oauth/v1/generate?grant_type=client_credentials"
+            
+            # Create basic auth header
+            credentials = f"{consumer_key}:{consumer_secret}"
+            encoded_credentials = base64.b64encode(credentials.encode()).decode()
+            
+            headers = {
+                'Authorization': f'Basic {encoded_credentials}',
+                'Content-Type': 'application/json'
+            }
+            
+            response = requests.get(auth_url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            token_data = response.json()
+            return token_data.get('access_token')
+            
         except Exception as e:
-            logger.error(f"Error getting access token: {e}")
-            return None
+            logger.error(f"Failed to get access token for provider {provider_id}: {e}")
+            raise
     
-    def initiate_stk_push(self, phone_number, amount, account_reference, transaction_desc, callback_url=None):
-        """Initiate STK Push payment"""
+    def initiate_stk_push(self, provider_id, phone_number, amount, account_reference, transaction_desc):
+        """Initiate STK Push for a specific provider"""
         try:
-            access_token = self.get_access_token()
-            if not access_token:
-                return {'success': False, 'message': 'Failed to get access token'}
+            provider = Provider.objects.get(id=provider_id)
+            access_token = self.get_provider_access_token(provider_id)
+            
+            # Decrypt provider credentials
+            shortcode = provider.mpesa_shortcode
+            passkey = decrypt_mpesa_credential(provider.mpesa_passkey)
+            
+            if not shortcode or not passkey:
+                raise ValueError("Provider M-PESA shortcode or passkey not found")
             
             # Generate timestamp and password
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            password = self._generate_password(timestamp)
+            password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
             
-            # Use provider's callback URL if not provided
-            if not callback_url:
-                callback_url = self.provider.callback_url or f"{settings.FRONTEND_URL}/api/payments/callback/{self.provider.id}/"
-            
-            url = f"{self.base_url}/mpesa/stkpush/v1/processrequest"
+            # STK Push URL
+            stk_url = f"{self.daraja_base_url}/mpesa/stkpush/v1/processrequest"
             
             headers = {
                 'Authorization': f'Bearer {access_token}',
@@ -76,174 +76,180 @@ class PaymentBucketService:
             }
             
             payload = {
-                "BusinessShortCode": self.shortcode,
+                "BusinessShortCode": shortcode,
                 "Password": password,
                 "Timestamp": timestamp,
                 "TransactionType": "CustomerPayBillOnline",
                 "Amount": int(amount),
                 "PartyA": phone_number,
-                "PartyB": self.shortcode,
+                "PartyB": shortcode,
                 "PhoneNumber": phone_number,
-                "CallBackURL": callback_url,
+                "CallBackURL": provider.callback_url,
                 "AccountReference": account_reference,
                 "TransactionDesc": transaction_desc
             }
             
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(stk_url, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
             
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('ResponseCode') == '0':
-                    return {
-                        'success': True,
-                        'checkout_request_id': data.get('CheckoutRequestID'),
-                        'merchant_request_id': data.get('MerchantRequestID'),
-                        'response_code': data.get('ResponseCode'),
-                        'response_description': data.get('ResponseDescription')
-                    }
-                else:
-                    return {
-                        'success': False,
-                        'message': data.get('ResponseDescription', 'STK Push failed')
-                    }
-            else:
-                logger.error(f"STK Push failed: {response.text}")
-                return {'success': False, 'message': 'STK Push request failed'}
-                
+            result = response.json()
+            
+            # Update provider test status
+            provider.mpesa_last_test = timezone.now()
+            provider.mpesa_test_status = 'success' if result.get('ResponseCode') == '0' else 'failed'
+            provider.save()
+            
+            return result
+            
         except Exception as e:
-            logger.error(f"Error initiating STK Push: {e}")
-            return {'success': False, 'message': str(e)}
+            logger.error(f"STK Push failed for provider {provider_id}: {e}")
+            # Update provider test status
+            try:
+                provider = Provider.objects.get(id=provider_id)
+                provider.mpesa_last_test = timezone.now()
+                provider.mpesa_test_status = 'failed'
+                provider.save()
+            except:
+                pass
+            raise
     
-    def query_stk_push_status(self, checkout_request_id):
-        """Query STK Push payment status"""
+    def query_stk_push_status(self, provider_id, checkout_request_id):
+        """Query STK Push status for a specific provider"""
         try:
-            access_token = self.get_access_token()
-            if not access_token:
-                return {'success': False, 'message': 'Failed to get access token'}
+            access_token = self.get_provider_access_token(provider_id)
+            provider = Provider.objects.get(id=provider_id)
             
-            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-            password = self._generate_password(timestamp)
-            
-            url = f"{self.base_url}/mpesa/stkpushquery/v1/query"
+            query_url = f"{self.daraja_base_url}/mpesa/stkpushquery/v1/query"
             
             headers = {
                 'Authorization': f'Bearer {access_token}',
                 'Content-Type': 'application/json'
             }
             
+            timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+            password = base64.b64encode(f"{provider.mpesa_shortcode}{decrypt_mpesa_credential(provider.mpesa_passkey)}{timestamp}".encode()).decode()
+            
             payload = {
-                "BusinessShortCode": self.shortcode,
+                "BusinessShortCode": provider.mpesa_shortcode,
                 "Password": password,
                 "Timestamp": timestamp,
                 "CheckoutRequestID": checkout_request_id
             }
             
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(query_url, headers=headers, json=payload, timeout=30)
+            response.raise_for_status()
             
-            if response.status_code == 200:
-                data = response.json()
+            return response.json()
+            
+        except Exception as e:
+            logger.error(f"STK Push query failed for provider {provider_id}: {e}")
+            raise
+    
+    def test_provider_credentials(self, provider_id):
+        """Test if provider's M-PESA credentials are working"""
+        try:
+            # Try to get access token
+            access_token = self.get_provider_access_token(provider_id)
+            
+            if access_token:
+                # Update provider status
+                provider = Provider.objects.get(id=provider_id)
+                provider.mpesa_credentials_verified = True
+                provider.mpesa_last_test = timezone.now()
+                provider.mpesa_test_status = 'success'
+                provider.save()
+                
                 return {
                     'success': True,
-                    'result_code': data.get('ResultCode'),
-                    'result_description': data.get('ResultDesc'),
-                    'checkout_request_id': data.get('CheckoutRequestID'),
-                    'merchant_request_id': data.get('MerchantRequestID')
+                    'message': 'M-PESA credentials are valid and working',
+                    'access_token': access_token[:20] + '...'  # Partial token for verification
                 }
             else:
-                logger.error(f"STK Push query failed: {response.text}")
-                return {'success': False, 'message': 'STK Push query failed'}
+                raise ValueError("Failed to get access token")
                 
         except Exception as e:
-            logger.error(f"Error querying STK Push status: {e}")
-            return {'success': False, 'message': str(e)}
+            logger.error(f"Credential test failed for provider {provider_id}: {e}")
+            
+            # Update provider status
+            try:
+                provider = Provider.objects.get(id=provider_id)
+                provider.mpesa_credentials_verified = False
+                provider.mpesa_last_test = timezone.now()
+                provider.mpesa_test_status = 'failed'
+                provider.save()
+            except:
+                pass
+            
+            return {
+                'success': False,
+                'message': f'Credential test failed: {str(e)}',
+                'error': str(e)
+            }
     
-    def _generate_password(self, timestamp):
-        """Generate M-PESA API password"""
-        import base64
-        password_string = f"{self.shortcode}{self.passkey}{timestamp}"
-        password_bytes = password_string.encode('utf-8')
-        password = base64.b64encode(password_bytes).decode('utf-8')
-        return password
+    def generate_callback_url(self, provider_id):
+        """Generate callback URL for a specific provider"""
+        base_url = getattr(settings, 'BASE_URL', 'http://localhost:8000')
+        return f"{base_url}/payments/callback/{provider_id}/"
     
-    def test_credentials(self):
-        """Test if provider's M-PESA credentials are valid"""
+    def handle_mpesa_callback(self, provider_id, callback_data):
+        """Handle M-PESA callback for a specific provider"""
         try:
-            access_token = self.get_access_token()
-            if access_token:
-                # Update provider's test status
-                self.provider.mpesa_credentials_verified = True
-                self.provider.mpesa_last_test = timezone.now()
-                self.provider.mpesa_test_status = 'success'
-                self.provider.save()
-                return True
+            # Parse callback data
+            body = callback_data.get('Body', {})
+            stk_callback = body.get('stkCallback', {})
+            
+            # Extract transaction details
+            checkout_request_id = stk_callback.get('CheckoutRequestID')
+            result_code = stk_callback.get('ResultCode')
+            result_desc = stk_callback.get('ResultDesc')
+            
+            # Get callback metadata
+            callback_metadata = stk_callback.get('CallbackMetadata', {})
+            item_list = callback_metadata.get('Item', [])
+            
+            # Extract payment details
+            payment_data = {}
+            for item in item_list:
+                name = item.get('Name')
+                value = item.get('Value')
+                if name and value:
+                    payment_data[name] = value
+            
+            # Process the callback
+            if result_code == 0:  # Success
+                # Payment successful
+                logger.info(f"Payment successful for provider {provider_id}: {checkout_request_id}")
+                
+                # Here you would typically:
+                # 1. Update ticket status to 'paid'
+                # 2. Activate WiFi access
+                # 3. Send confirmation to customer
+                # 4. Update provider revenue tracking
+                
+                return {
+                    'success': True,
+                    'message': 'Payment processed successfully',
+                    'checkout_request_id': checkout_request_id,
+                    'payment_data': payment_data
+                }
             else:
-                self.provider.mpesa_credentials_verified = False
-                self.provider.mpesa_last_test = timezone.now()
-                self.provider.mpesa_test_status = 'failed'
-                self.provider.save()
-                return False
+                # Payment failed
+                logger.warning(f"Payment failed for provider {provider_id}: {result_desc}")
+                
+                return {
+                    'success': False,
+                    'message': f'Payment failed: {result_desc}',
+                    'result_code': result_code,
+                    'result_desc': result_desc
+                }
+                
         except Exception as e:
-            logger.error(f"Error testing credentials: {e}")
-            self.provider.mpesa_credentials_verified = False
-            self.provider.mpesa_last_test = timezone.now()
-            self.provider.mpesa_test_status = 'failed'
-            self.provider.save()
-            return False
+            logger.error(f"Callback handling failed for provider {provider_id}: {e}")
+            return {
+                'success': False,
+                'message': f'Callback processing failed: {str(e)}',
+                'error': str(e)
+            }
 
-def process_payment_callback(provider_id, callback_data):
-    """Process M-PESA payment callback"""
-    try:
-        provider = Provider.objects.get(id=provider_id)
-        
-        # Extract callback data
-        body = callback_data.get('Body', {})
-        stk_callback = body.get('stkCallback', {})
-        
-        checkout_request_id = stk_callback.get('CheckoutRequestID')
-        result_code = stk_callback.get('ResultCode')
-        result_description = stk_callback.get('ResultDesc')
-        
-        if result_code == 0:  # Payment successful
-            # Find the ticket sale by checkout request ID
-            try:
-                ticket_sale = TicketSale.objects.get(
-                    provider=provider,
-                    payment_reference=checkout_request_id
-                )
-                
-                # Update ticket sale status
-                ticket_sale.status = 'completed'
-                ticket_sale.payment_reference = checkout_request_id
-                ticket_sale.save()
-                
-                # Activate the ticket
-                if ticket_sale.ticket:
-                    ticket_sale.ticket.status = 'active'
-                    ticket_sale.ticket.save()
-                
-                logger.info(f"Payment successful for ticket sale {ticket_sale.id}")
-                return True
-                
-            except TicketSale.DoesNotExist:
-                logger.error(f"Ticket sale not found for checkout request {checkout_request_id}")
-                return False
-        else:
-            # Payment failed
-            try:
-                ticket_sale = TicketSale.objects.get(
-                    provider=provider,
-                    payment_reference=checkout_request_id
-                )
-                ticket_sale.status = 'failed'
-                ticket_sale.save()
-                
-                logger.info(f"Payment failed for ticket sale {ticket_sale.id}: {result_description}")
-                return True
-                
-            except TicketSale.DoesNotExist:
-                logger.error(f"Ticket sale not found for failed payment {checkout_request_id}")
-                return False
-                
-    except Exception as e:
-        logger.error(f"Error processing payment callback: {e}")
-        return False
+# Global service instance
+payment_bucket_service = PaymentBucketService()

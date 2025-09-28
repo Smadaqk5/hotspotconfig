@@ -1,124 +1,88 @@
-"""
-Payment Bucket API Views
-Handles M-PESA payments using provider-specific credentials
-"""
-import json
-import logging
+from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
+import json
+import logging
+
 from accounts.models import Provider
 from accounts.encryption import encrypt_mpesa_credential, decrypt_mpesa_credential
-from payments.payment_bucket import PaymentBucketService, process_payment_callback
-from tickets.models import Ticket, TicketSale
-import uuid
+from .payment_bucket import payment_bucket_service
 
 logger = logging.getLogger(__name__)
+
+def is_provider(user):
+    """Check if user is a provider"""
+    return user.is_authenticated and (user.user_type == 'provider' or user.is_super_admin)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def initiate_payment(request):
-    """Initiate STK Push payment using provider's credentials"""
+    """Initiate STK Push payment for a provider"""
     try:
-        data = request.data
-        provider_id = data.get('provider_id')
-        phone_number = data.get('phone_number')
-        amount = data.get('amount')
-        ticket_id = data.get('ticket_id')
-        account_reference = data.get('account_reference', f"WIFI_{ticket_id}")
-        transaction_desc = data.get('transaction_desc', 'WiFi Voucher Purchase')
+        # Get provider from request
+        provider = request.user.provider_profile
         
         # Validate required fields
-        if not all([provider_id, phone_number, amount, ticket_id]):
-            return Response({
-                'success': False,
-                'message': 'Missing required fields: provider_id, phone_number, amount, ticket_id'
-            }, status=status.HTTP_400_BAD_REQUEST)
+        required_fields = ['phone_number', 'amount', 'account_reference', 'transaction_desc']
+        for field in required_fields:
+            if field not in request.data:
+                return Response({
+                    'success': False,
+                    'message': f'Missing required field: {field}'
+                }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get provider
-        try:
-            provider = Provider.objects.get(id=provider_id)
-        except Provider.DoesNotExist:
-            return Response({
-                'success': False,
-                'message': 'Provider not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Check if provider has M-PESA credentials
+        # Validate provider has M-PESA credentials
         if not provider.mpesa_consumer_key or not provider.mpesa_consumer_secret:
             return Response({
                 'success': False,
-                'message': 'Provider M-PESA credentials not configured'
+                'message': 'M-PESA credentials not configured. Please set up your payment settings.'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Get ticket
-        try:
-            ticket = Ticket.objects.get(id=ticket_id, provider=provider)
-        except Ticket.DoesNotExist:
+        # Validate credentials are verified
+        if not provider.mpesa_credentials_verified:
             return Response({
                 'success': False,
-                'message': 'Ticket not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Create ticket sale record
-        ticket_sale = TicketSale.objects.create(
-            provider=provider,
-            ticket=ticket,
-            customer_phone=phone_number,
-            quantity=1,
-            unit_price=float(amount),
-            total_amount=float(amount),
-            currency='KES',
-            payment_method='mpesa',
-            status='pending'
-        )
-        
-        # Initialize payment bucket service
-        payment_service = PaymentBucketService(provider_id)
+                'message': 'M-PESA credentials not verified. Please test your credentials first.'
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # Initiate STK Push
-        result = payment_service.initiate_stk_push(
-            phone_number=phone_number,
-            amount=amount,
-            account_reference=account_reference,
-            transaction_desc=transaction_desc
+        result = payment_bucket_service.initiate_stk_push(
+            provider_id=provider.id,
+            phone_number=request.data['phone_number'],
+            amount=request.data['amount'],
+            account_reference=request.data['account_reference'],
+            transaction_desc=request.data['transaction_desc']
         )
         
-        if result['success']:
-            # Update ticket sale with checkout request ID
-            ticket_sale.payment_reference = result['checkout_request_id']
-            ticket_sale.save()
-            
+        if result.get('ResponseCode') == '0':
             return Response({
                 'success': True,
                 'message': 'STK Push initiated successfully',
-                'checkout_request_id': result['checkout_request_id'],
-                'merchant_request_id': result['merchant_request_id'],
-                'ticket_sale_id': ticket_sale.id
+                'checkout_request_id': result.get('CheckoutRequestID'),
+                'merchant_request_id': result.get('MerchantRequestID'),
+                'customer_message': result.get('CustomerMessage')
             })
         else:
-            # Update ticket sale status to failed
-            ticket_sale.status = 'failed'
-            ticket_sale.save()
-            
             return Response({
                 'success': False,
-                'message': result['message']
+                'message': result.get('CustomerMessage', 'STK Push failed'),
+                'error_code': result.get('ResponseCode')
             }, status=status.HTTP_400_BAD_REQUEST)
             
     except Exception as e:
-        logger.error(f"Error initiating payment: {e}")
+        logger.error(f"Payment initiation failed: {e}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': f'Payment initiation failed: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -126,29 +90,31 @@ def initiate_payment(request):
 def query_payment_status(request):
     """Query STK Push payment status"""
     try:
-        data = request.data
-        provider_id = data.get('provider_id')
-        checkout_request_id = data.get('checkout_request_id')
+        provider = request.user.provider_profile
         
-        if not all([provider_id, checkout_request_id]):
+        if 'checkout_request_id' not in request.data:
             return Response({
                 'success': False,
-                'message': 'Missing required fields: provider_id, checkout_request_id'
+                'message': 'checkout_request_id is required'
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Initialize payment bucket service
-        payment_service = PaymentBucketService(provider_id)
+        result = payment_bucket_service.query_stk_push_status(
+            provider_id=provider.id,
+            checkout_request_id=request.data['checkout_request_id']
+        )
         
-        # Query payment status
-        result = payment_service.query_stk_push_status(checkout_request_id)
-        
-        return Response(result)
+        return Response({
+            'success': True,
+            'status': result.get('ResultCode'),
+            'description': result.get('ResultDesc'),
+            'result': result
+        })
         
     except Exception as e:
-        logger.error(f"Error querying payment status: {e}")
+        logger.error(f"Payment status query failed: {e}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': f'Status query failed: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
@@ -156,25 +122,9 @@ def query_payment_status(request):
 def test_provider_credentials(request):
     """Test provider's M-PESA credentials"""
     try:
-        data = request.data
-        provider_id = data.get('provider_id')
+        provider = request.user.provider_profile
         
-        if not provider_id:
-            return Response({
-                'success': False,
-                'message': 'Provider ID is required'
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Get provider
-        try:
-            provider = Provider.objects.get(id=provider_id)
-        except Provider.DoesNotExist:
-            return Response({
-                'success': False,
-                'message': 'Provider not found'
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # Check if provider has M-PESA credentials
+        # Check if credentials are set
         if not provider.mpesa_consumer_key or not provider.mpesa_consumer_secret:
             return Response({
                 'success': False,
@@ -182,80 +132,151 @@ def test_provider_credentials(request):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Test credentials
-        payment_service = PaymentBucketService(provider_id)
-        is_valid = payment_service.test_credentials()
+        result = payment_bucket_service.test_provider_credentials(provider.id)
+        
+        return Response(result)
+        
+    except Exception as e:
+        logger.error(f"Credential test failed: {e}")
+        return Response({
+            'success': False,
+            'message': f'Credential test failed: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_provider_callback_url(request, provider_id):
+    """Get callback URL for a specific provider"""
+    try:
+        # Check if user can access this provider
+        if not request.user.is_super_admin and request.user.provider_profile.id != provider_id:
+            return Response({
+                'success': False,
+                'message': 'Access denied'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        provider = get_object_or_404(Provider, id=provider_id)
+        callback_url = payment_bucket_service.generate_callback_url(provider_id)
         
         return Response({
-            'success': is_valid,
-            'message': 'Credentials are valid' if is_valid else 'Credentials are invalid',
+            'success': True,
+            'callback_url': callback_url,
             'provider_id': provider_id,
-            'verified': provider.mpesa_credentials_verified,
-            'last_test': provider.mpesa_last_test,
-            'test_status': provider.mpesa_test_status
+            'provider_name': provider.business_name
         })
         
     except Exception as e:
-        logger.error(f"Error testing credentials: {e}")
+        logger.error(f"Callback URL generation failed: {e}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': f'Callback URL generation failed: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @csrf_exempt
 @require_http_methods(["POST"])
 def mpesa_callback(request, provider_id):
-    """Handle M-PESA payment callbacks"""
+    """Handle M-PESA callback for a specific provider"""
     try:
         # Get provider
         provider = get_object_or_404(Provider, id=provider_id)
         
         # Parse callback data
-        callback_data = json.loads(request.body.decode('utf-8'))
+        try:
+            callback_data = json.loads(request.body.decode('utf-8'))
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid JSON data'
+            }, status=400)
         
         # Process callback
-        success = process_payment_callback(provider_id, callback_data)
+        result = payment_bucket_service.handle_mpesa_callback(provider_id, callback_data)
         
-        if success:
-            return JsonResponse({
-                'ResultCode': 0,
-                'ResultDesc': 'Success'
-            })
+        if result['success']:
+            logger.info(f"Callback processed successfully for provider {provider_id}")
         else:
-            return JsonResponse({
-                'ResultCode': 1,
-                'ResultDesc': 'Failed'
-            })
-            
-    except Exception as e:
-        logger.error(f"Error processing M-PESA callback: {e}")
-        return JsonResponse({
-            'ResultCode': 1,
-            'ResultDesc': 'Error processing callback'
-        })
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_provider_callback_url(request, provider_id):
-    """Get provider's callback URL"""
-    try:
-        provider = get_object_or_404(Provider, id=provider_id)
+            logger.warning(f"Callback processing failed for provider {provider_id}: {result['message']}")
         
-        # Generate callback URL if not exists
-        if not provider.callback_url:
-            from django.conf import settings
-            callback_url = f"{settings.FRONTEND_URL}/api/payments/callback/{provider_id}/"
-            provider.callback_url = callback_url
-            provider.save()
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger.error(f"Callback handling failed for provider {provider_id}: {e}")
+        return JsonResponse({
+            'success': False,
+            'message': f'Callback processing failed: {str(e)}'
+        }, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_mpesa_credentials(request):
+    """Save M-PESA credentials for a provider"""
+    try:
+        provider = request.user.provider_profile
+        
+        # Validate required fields
+        required_fields = ['consumer_key', 'consumer_secret', 'shortcode', 'passkey']
+        for field in required_fields:
+            if field not in request.data:
+                return Response({
+                    'success': False,
+                    'message': f'Missing required field: {field}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Encrypt and save credentials
+        provider.mpesa_consumer_key = encrypt_mpesa_credential(request.data['consumer_key'])
+        provider.mpesa_consumer_secret = encrypt_mpesa_credential(request.data['consumer_secret'])
+        provider.mpesa_shortcode = request.data['shortcode']
+        provider.mpesa_passkey = encrypt_mpesa_credential(request.data['passkey'])
+        provider.mpesa_environment = request.data.get('environment', 'sandbox')
+        
+        # Generate callback URL
+        provider.callback_url = payment_bucket_service.generate_callback_url(provider.id)
+        
+        # Reset verification status
+        provider.mpesa_credentials_verified = False
+        provider.mpesa_test_status = 'pending'
+        
+        provider.save()
         
         return Response({
             'success': True,
-            'callback_url': provider.callback_url,
-            'provider_id': provider_id
+            'message': 'M-PESA credentials saved successfully',
+            'callback_url': provider.callback_url
         })
         
     except Exception as e:
-        logger.error(f"Error getting callback URL: {e}")
+        logger.error(f"Credential save failed: {e}")
         return Response({
             'success': False,
-            'message': 'Internal server error'
+            'message': f'Failed to save credentials: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def clear_mpesa_credentials(request):
+    """Clear M-PESA credentials for a provider"""
+    try:
+        provider = request.user.provider_profile
+        
+        # Clear credentials
+        provider.mpesa_consumer_key = None
+        provider.mpesa_consumer_secret = None
+        provider.mpesa_shortcode = None
+        provider.mpesa_passkey = None
+        provider.callback_url = None
+        provider.mpesa_credentials_verified = False
+        provider.mpesa_test_status = None
+        
+        provider.save()
+        
+        return Response({
+            'success': True,
+            'message': 'M-PESA credentials cleared successfully'
+        })
+        
+    except Exception as e:
+        logger.error(f"Credential clear failed: {e}")
+        return Response({
+            'success': False,
+            'message': f'Failed to clear credentials: {str(e)}'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

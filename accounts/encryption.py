@@ -1,6 +1,3 @@
-"""
-Encryption utilities for sensitive data like M-PESA credentials
-"""
 import base64
 import os
 from cryptography.fernet import Fernet
