@@ -1,113 +1,57 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from django.http import JsonResponse
-from django.db.models import Count, Sum, Q
+from django.db.models import Sum, Count, F, Q
 from django.utils import timezone
-from datetime import datetime, timedelta
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+from datetime import timedelta
+from django.http import JsonResponse, HttpResponse
+import csv
 
-from accounts.models import User, Provider, EndUser
+from accounts.models import User, Provider
 from tickets.models import Ticket, TicketSale, TicketType
 from subscriptions.models import ProviderSubscription, ProviderSubscriptionPlan
 from payments.models import Payment
-from .models import SystemSettings, PlatformAnalytics, ProviderCommission, SystemNotification
-
 
 def is_super_admin(user):
-    """Check if user is super admin"""
-    return user.is_authenticated and (user.is_superuser or user.user_type == 'super_admin')
-
+    return user.is_authenticated and user.is_superuser
 
 @login_required
 @user_passes_test(is_super_admin)
 def super_admin_dashboard(request):
     """Super Admin Dashboard"""
-    # Get current date and date ranges
-    today = timezone.now().date()
-    week_ago = today - timedelta(days=7)
-    month_ago = today - timedelta(days=30)
-    
-    # Provider statistics
+    # Platform Statistics
     total_providers = Provider.objects.count()
-    active_providers = Provider.objects.filter(status='active', is_approved=True).count()
+    active_providers = Provider.objects.filter(status='active').count()
     pending_providers = Provider.objects.filter(status='pending').count()
-    suspended_providers = Provider.objects.filter(status='suspended').count()
+    
+    total_tickets_sold = TicketSale.objects.aggregate(total=Sum('quantity'))['total'] or 0
+    total_revenue = TicketSale.objects.aggregate(total=Sum('total_amount'))['total'] or 0
+    total_end_users = User.objects.filter(user_type='end_user').count()
     
     # Recent providers
-    recent_providers = Provider.objects.filter(
-        created_at__gte=week_ago
-    ).order_by('-created_at')[:5]
+    recent_providers = Provider.objects.order_by('-created_at')[:5]
     
-    # Ticket statistics
-    total_tickets = Ticket.objects.count()
-    active_tickets = Ticket.objects.filter(status='active').count()
-    expired_tickets = Ticket.objects.filter(status='expired').count()
-    used_tickets = Ticket.objects.filter(status='used').count()
-    
-    # Revenue statistics
-    total_revenue = TicketSale.objects.aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
-    
-    monthly_revenue = TicketSale.objects.filter(
-        sold_at__gte=month_ago
-    ).aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
-    
-    weekly_revenue = TicketSale.objects.filter(
-        sold_at__gte=week_ago
-    ).aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
-    
-    # Top performing providers
-    top_providers = Provider.objects.annotate(
-        ticket_count=Count('tickets'),
-        revenue=Sum('ticket_sales__total_amount')
-    ).order_by('-revenue')[:5]
-    
-    # Recent activity
-    recent_ticket_sales = TicketSale.objects.select_related(
-        'provider', 'ticket'
-    ).order_by('-sold_at')[:10]
-    
-    # System notifications
-    notifications = SystemNotification.objects.filter(
-        is_active=True
-    ).order_by('-created_at')[:5]
+    # Recent sales
+    recent_sales = TicketSale.objects.order_by('-created_at')[:5]
     
     context = {
         'page_title': 'Super Admin Dashboard',
         'total_providers': total_providers,
         'active_providers': active_providers,
         'pending_providers': pending_providers,
-        'suspended_providers': suspended_providers,
-        'recent_providers': recent_providers,
-        'total_tickets': total_tickets,
-        'active_tickets': active_tickets,
-        'expired_tickets': expired_tickets,
-        'used_tickets': used_tickets,
+        'total_tickets_sold': total_tickets_sold,
         'total_revenue': total_revenue,
-        'monthly_revenue': monthly_revenue,
-        'weekly_revenue': weekly_revenue,
-        'top_providers': top_providers,
-        'recent_ticket_sales': recent_ticket_sales,
-        'notifications': notifications,
+        'total_end_users': total_end_users,
+        'recent_providers': recent_providers,
+        'recent_sales': recent_sales,
     }
-    
     return render(request, 'super_admin/dashboard.html', context)
-
 
 @login_required
 @user_passes_test(is_super_admin)
-def providers_list(request):
-    """List all providers"""
-    providers = Provider.objects.select_related('user').order_by('-created_at')
+def manage_providers(request):
+    """Manage all providers"""
+    providers = Provider.objects.all().order_by('-created_at')
     
     # Filter by status
     status_filter = request.GET.get('status')
@@ -119,187 +63,178 @@ def providers_list(request):
     if search:
         providers = providers.filter(
             Q(business_name__icontains=search) |
-            Q(user__email__icontains=search) |
+            Q(contact_email__icontains=search) |
             Q(contact_person__icontains=search)
         )
     
     context = {
-        'page_title': 'Providers Management',
+        'page_title': 'Manage Providers',
         'providers': providers,
         'status_filter': status_filter,
         'search': search,
     }
-    
-    return render(request, 'super_admin/providers_list.html', context)
-
+    return render(request, 'super_admin/manage_providers.html', context)
 
 @login_required
 @user_passes_test(is_super_admin)
 def provider_detail(request, provider_id):
-    """Provider detail view"""
+    """View and manage a specific provider"""
     provider = get_object_or_404(Provider, id=provider_id)
     
-    # Provider statistics
-    total_tickets = Ticket.objects.filter(provider=provider).count()
-    active_tickets = Ticket.objects.filter(provider=provider, status='active').count()
-    total_sales = TicketSale.objects.filter(provider=provider).count()
-    total_revenue = TicketSale.objects.filter(provider=provider).aggregate(
-        total=Sum('total_amount')
-    )['total'] or 0
+    # Get provider statistics
+    provider_tickets = Ticket.objects.filter(provider=provider)
+    provider_sales = TicketSale.objects.filter(ticket__provider=provider)
     
-    # Recent activity
-    recent_tickets = Ticket.objects.filter(provider=provider).order_by('-created_at')[:10]
-    recent_sales = TicketSale.objects.filter(provider=provider).order_by('-sold_at')[:10]
-    
-    # Subscription info
-    current_subscription = ProviderSubscription.objects.filter(
-        provider=provider,
-        status='active'
-    ).first()
+    total_tickets = provider_tickets.count()
+    total_sales = provider_sales.aggregate(total=Sum('total_amount'))['total'] or 0
+    total_quantity = provider_sales.aggregate(total=Sum('quantity'))['total'] or 0
     
     context = {
-        'page_title': f'Provider - {provider.business_name}',
+        'page_title': f'Provider: {provider.business_name}',
         'provider': provider,
         'total_tickets': total_tickets,
-        'active_tickets': active_tickets,
         'total_sales': total_sales,
-        'total_revenue': total_revenue,
-        'recent_tickets': recent_tickets,
-        'recent_sales': recent_sales,
-        'current_subscription': current_subscription,
+        'total_quantity': total_quantity,
     }
-    
     return render(request, 'super_admin/provider_detail.html', context)
-
 
 @login_required
 @user_passes_test(is_super_admin)
 def approve_provider(request, provider_id):
-    """Approve a provider"""
+    """Approve a pending provider"""
     provider = get_object_or_404(Provider, id=provider_id)
-    
     if request.method == 'POST':
         provider.status = 'active'
         provider.is_approved = True
-        provider.approved_by = request.user
         provider.approved_at = timezone.now()
+        provider.approved_by = request.user
         provider.save()
-        
-        messages.success(request, f'Provider {provider.business_name} has been approved.')
-        return redirect('super_admin:provider_detail', provider_id=provider.id)
-    
-    return render(request, 'super_admin/approve_provider.html', {
-        'provider': provider
-    })
-
+        messages.success(request, f'Provider {provider.business_name} approved.')
+    return redirect('super_admin:manage_providers')
 
 @login_required
 @user_passes_test(is_super_admin)
 def suspend_provider(request, provider_id):
-    """Suspend a provider"""
+    """Suspend an active provider"""
     provider = get_object_or_404(Provider, id=provider_id)
-    
     if request.method == 'POST':
         provider.status = 'suspended'
         provider.save()
-        
-        messages.success(request, f'Provider {provider.business_name} has been suspended.')
-        return redirect('super_admin:provider_detail', provider_id=provider.id)
-    
-    return render(request, 'super_admin/suspend_provider.html', {
-        'provider': provider
-    })
-
+        messages.warning(request, f'Provider {provider.business_name} suspended.')
+    return redirect('super_admin:manage_providers')
 
 @login_required
 @user_passes_test(is_super_admin)
-def analytics_view(request):
-    """Platform analytics"""
-    # Date range
-    end_date = timezone.now().date()
-    start_date = end_date - timedelta(days=30)
+def delete_provider(request, provider_id):
+    """Delete a provider"""
+    provider = get_object_or_404(Provider, id=provider_id)
+    if request.method == 'POST':
+        provider.delete()
+        messages.error(request, f'Provider {provider.business_name} deleted.')
+    return redirect('super_admin:manage_providers')
+
+@login_required
+@user_passes_test(is_super_admin)
+def global_analytics(request):
+    """Global analytics and reports"""
+    # Example: Tickets sold over time
+    days = int(request.GET.get('days', 30))
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=days)
     
-    # Daily analytics
-    daily_analytics = PlatformAnalytics.objects.filter(
-        date__range=[start_date, end_date]
+    sales_data = TicketSale.objects.filter(
+        created_at__range=(start_date, end_date)
+    ).annotate(
+        date=F('created_at__date')
+    ).values('date').annotate(
+        total_sales=Sum('total_amount'),
+        ticket_count=Sum('quantity')
     ).order_by('date')
     
-    # Provider growth
-    provider_growth = Provider.objects.filter(
-        created_at__date__range=[start_date, end_date]
-    ).extra(
-        select={'day': 'date(created_at)'}
-    ).values('day').annotate(count=Count('id'))
-    
-    # Revenue trends
-    revenue_trends = TicketSale.objects.filter(
-        sold_at__date__range=[start_date, end_date]
-    ).extra(
-        select={'day': 'date(sold_at)'}
-    ).values('day').annotate(
-        revenue=Sum('total_amount'),
-        sales_count=Count('id')
-    )
+    # Example: Ticket type distribution
+    ticket_type_analytics = TicketSale.objects.values(
+        'ticket_type__name'
+    ).annotate(
+        total_sales=Sum('total_amount'),
+        ticket_count=Sum('quantity')
+    ).order_by('-total_sales')
     
     context = {
-        'page_title': 'Platform Analytics',
-        'daily_analytics': daily_analytics,
-        'provider_growth': provider_growth,
-        'revenue_trends': revenue_trends,
-        'start_date': start_date,
-        'end_date': end_date,
+        'page_title': 'Global Analytics',
+        'sales_data': list(sales_data),
+        'ticket_type_analytics': ticket_type_analytics,
+        'period': days,
+        'days': days,
     }
     
     return render(request, 'super_admin/analytics.html', context)
 
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def api_global_stats(request):
-    """API endpoint for global statistics"""
-    if not is_super_admin(request.user):
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-    
-    # Get statistics
-    stats = {
-        'total_providers': Provider.objects.count(),
-        'active_providers': Provider.objects.filter(status='active').count(),
-        'total_tickets': Ticket.objects.count(),
-        'active_tickets': Ticket.objects.filter(status='active').count(),
-        'total_revenue': TicketSale.objects.aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0,
-        'monthly_revenue': TicketSale.objects.filter(
-            sold_at__gte=timezone.now() - timedelta(days=30)
-        ).aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0,
+@login_required
+@user_passes_test(is_super_admin)
+def system_settings(request):
+    """System settings and configuration"""
+    context = {
+        'page_title': 'System Settings',
     }
-    
-    return Response(stats)
+    return render(request, 'super_admin/settings.html', context)
 
+# Additional placeholder views
+@login_required
+@user_passes_test(is_super_admin)
+def approve_providers(request):
+    """Bulk approve providers"""
+    return render(request, 'super_admin/approve_providers.html', {'page_title': 'Approve Providers'})
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def api_provider_stats(request, provider_id):
-    """API endpoint for provider statistics"""
-    if not is_super_admin(request.user):
-        return Response({'error': 'Unauthorized'}, status=status.HTTP_403_FORBIDDEN)
-    
-    try:
-        provider = Provider.objects.get(id=provider_id)
-    except Provider.DoesNotExist:
-        return Response({'error': 'Provider not found'}, status=status.HTTP_404_NOT_FOUND)
-    
-    stats = {
-        'provider_name': provider.business_name,
-        'total_tickets': Ticket.objects.filter(provider=provider).count(),
-        'active_tickets': Ticket.objects.filter(provider=provider, status='active').count(),
-        'total_sales': TicketSale.objects.filter(provider=provider).count(),
-        'total_revenue': TicketSale.objects.filter(provider=provider).aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0,
-        'subscription_status': provider.get_subscription_status(),
-    }
-    
-    return Response(stats)
+@login_required
+@user_passes_test(is_super_admin)
+def create_provider(request):
+    """Create new provider"""
+    return render(request, 'super_admin/create_provider.html', {'page_title': 'Create Provider'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def revenue_reports(request):
+    """Revenue reports"""
+    return render(request, 'super_admin/revenue_reports.html', {'page_title': 'Revenue Reports'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def user_analytics(request):
+    """User analytics"""
+    return render(request, 'super_admin/user_analytics.html', {'page_title': 'User Analytics'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def provider_analytics(request):
+    """Provider analytics"""
+    return render(request, 'super_admin/provider_analytics.html', {'page_title': 'Provider Analytics'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def payment_monitoring(request):
+    """Payment monitoring"""
+    return render(request, 'super_admin/payment_monitoring.html', {'page_title': 'Payment Monitoring'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def platform_logs(request):
+    """Platform logs"""
+    return render(request, 'super_admin/platform_logs.html', {'page_title': 'Platform Logs'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def system_health(request):
+    """System health"""
+    return render(request, 'super_admin/system_health.html', {'page_title': 'System Health'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def bulk_approve(request):
+    """Bulk approve providers"""
+    return render(request, 'super_admin/bulk_approve.html', {'page_title': 'Bulk Approve'})
+
+@login_required
+@user_passes_test(is_super_admin)
+def export_data(request):
+    """Export data"""
+    return render(request, 'super_admin/export_data.html', {'page_title': 'Export Data'})
