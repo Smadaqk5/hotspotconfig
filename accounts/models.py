@@ -7,7 +7,6 @@ from django.core.validators import RegexValidator
 class User(AbstractUser):
     """Extended user model with additional fields"""
     USER_TYPE_CHOICES = [
-        ('super_admin', 'Super Admin'),
         ('provider', 'Provider'),
         ('cashier', 'Cashier/Operator'),
         ('end_user', 'End User'),
@@ -61,15 +60,15 @@ class User(AbstractUser):
     
     def can_manage_revenue(self):
         """Check if user can view revenue reports"""
-        return self.user_type in ['provider', 'super_admin'] or self.is_super_admin
+        return self.user_type in ['provider'] or self.is_super_admin
     
     def can_manage_router_configs(self):
         """Check if user can manage router configurations"""
-        return self.user_type in ['provider', 'super_admin'] or self.is_super_admin
+        return self.user_type in ['provider'] or self.is_super_admin
     
     def can_manage_users(self):
         """Check if user can manage other users"""
-        return self.user_type in ['provider', 'super_admin'] or self.is_super_admin
+        return self.user_type in ['provider'] or self.is_super_admin
 
 
 class UserProfile(models.Model):

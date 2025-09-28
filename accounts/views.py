@@ -107,9 +107,7 @@ class LoginFormView(TemplateView):
             messages.success(request, f'Welcome back, {user.first_name}!')
             
             # Redirect based on user type
-            if user.is_super_admin_user():
-                return redirect('super_admin:dashboard')
-            elif user.is_provider():
+            if user.is_provider():
                 return redirect('provider:dashboard')
             elif user.is_cashier():
                 return redirect('cashier:dashboard')
@@ -142,9 +140,7 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     """Main dashboard - redirects based on user type"""
-    if request.user.is_super_admin_user():
-        return redirect('super_admin:dashboard')
-    elif request.user.is_provider():
+    if request.user.is_provider():
         return redirect('provider:dashboard')
     elif request.user.is_cashier():
         return redirect('cashier:dashboard')

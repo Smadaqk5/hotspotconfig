@@ -146,11 +146,7 @@
                             <i class="fas fa-home mr-1"></i> Home
                         </a>
                         {% if user.is_authenticated %}
-                            {% if user.is_super_admin_user %}
-                                <a href="{% url 'super_admin:dashboard' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
-                                    <i class="fas fa-crown mr-1"></i> Super Admin
-                                </a>
-                            {% elif user.is_provider %}
+                            {% if user.is_provider %}
                                 <a href="{% url 'provider:dashboard' %}" class="text-gray-900 hover:text-primary px-3 py-2 rounded-md text-sm font-medium">
                                     <i class="fas fa-building mr-1"></i> Provider
                                 </a>
@@ -201,11 +197,7 @@
                             <i class="fas fa-home mr-3"></i> Home
                         </a>
                         {% if user.is_authenticated %}
-                            {% if user.is_super_admin_user %}
-                                <a href="{% url 'super_admin:dashboard' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
-                                    <i class="fas fa-crown mr-3"></i> Super Admin
-                                </a>
-                            {% elif user.is_provider %}
+                            {% if user.is_provider %}
                                 <a href="{% url 'provider:dashboard' %}" class="mobile-nav-item block text-gray-900 hover:text-primary">
                                     <i class="fas fa-building mr-3"></i> Provider
                                 </a>
