@@ -83,6 +83,3 @@ class Migration(migrations.Migration):
             reverse_add_all_missing_fields,
         ),
     ]
-            reverse_add_all_missing_fields,
-        ),
-    ]
