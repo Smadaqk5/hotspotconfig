@@ -10,46 +10,26 @@ def safe_add_fields(apps, schema_editor):
     
     with schema_editor.connection.cursor() as cursor:
         # Check if columns exist and add them if they don't
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'plan_type'
-        """)
-        if not cursor.fetchone():
+        # Use SQLite syntax for checking column existence
+        cursor.execute("PRAGMA table_info(tickets_ticket)")
+        columns = [row[1] for row in cursor.fetchall()]
+        
+        if 'plan_type' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN plan_type VARCHAR(10) DEFAULT 'time'")
         
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'duration_hours'
-        """)
-        if not cursor.fetchone():
+        if 'duration_hours' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN duration_hours INTEGER")
         
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'data_limit_mb'
-        """)
-        if not cursor.fetchone():
+        if 'data_limit_mb' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN data_limit_mb INTEGER")
         
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'data_used_mb'
-        """)
-        if not cursor.fetchone():
+        if 'data_used_mb' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN data_used_mb INTEGER DEFAULT 0")
         
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'price'
-        """)
-        if not cursor.fetchone():
+        if 'price' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN price DECIMAL(10,2) DEFAULT 0")
         
-        cursor.execute("""
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'tickets_ticket' AND column_name = 'currency'
-        """)
-        if not cursor.fetchone():
+        if 'currency' not in columns:
             cursor.execute("ALTER TABLE tickets_ticket ADD COLUMN currency VARCHAR(3) DEFAULT 'KES'")
 
 
