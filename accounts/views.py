@@ -79,9 +79,7 @@ class RegistrationFormView(TemplateView):
                     county="",
                     country="Kenya"
                 )
-            elif user_type == 'cashier':
-                # Cashier needs to be assigned to a provider
-                messages.info(request, 'Cashier account created. Please contact a provider to assign you to their business.')
+            # Note: Cashier accounts are now created by providers through the super admin dashboard
             
             messages.success(request, 'Account created successfully! Please login.')
             return redirect('login')

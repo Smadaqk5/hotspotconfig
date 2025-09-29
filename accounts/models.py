@@ -8,7 +8,6 @@ class User(AbstractUser):
     """Extended user model with additional fields"""
     USER_TYPE_CHOICES = [
         ('provider', 'Provider'),
-        ('cashier', 'Cashier/Operator'),
         ('end_user', 'End User'),
     ]
     
